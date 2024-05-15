@@ -22,8 +22,8 @@ export function startScene() {
 	const control = new SceneControl(scene, camera, transactionsGrid);
 
 	// default file
-	let file = "https://raw.githubusercontent.com/gjnguyen18/utxo-lenses/master/transformed_data2.json"
-	// let file = "http://localhost:8080/testGet?start=1-2-14-23-42&end=1-3-13-11-12"
+	// let file = "https://raw.githubusercontent.com/gjnguyen18/utxo-lenses/master/transformed_data2.json"
+	let file = "http://localhost:8080/testGet?start=1-2-14-23-42&end=1-3-13-11-12"
 
 	console.log(encodeURIComponent("http://127.0.0.1:5501/api/v1/?startTime=2022-11-01T00:00:00Z&endTime=2023-11-30T23:59:59Z"))
 

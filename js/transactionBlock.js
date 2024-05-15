@@ -2,6 +2,7 @@ import * as T from 'three';
 import { getColorFromRamp } from './helpers';
 
 const COLORS = [new T.Color(0, 0.5, 1), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
+const COLORS2 = [new T.Color(0.3, 0.3, 0.3), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
 const SELECT_COLOR = new T.Color(0.2, 0.7, 0.3);
 const SELECT_COLOR_HL = new T.Color(0.2, 1, 0.5);
 const BLOCK_WIDTH = 1.0;
@@ -70,10 +71,34 @@ export class TransactionsGrid {
         }
     }
 
-    compareNode(node1, node2) {
+    compareNodeNumTransactions(node1, node2) {
         if(node1.node.transactions.size > node2.node.transactions.size) {
             return 1
         } else if (node1.node.transactions.size < node2.node.transactions.size) {
+            return -1
+        } else {
+            return 0
+        }
+    }
+
+    compareNodeTotals(node1, node2) {
+        let val1 = 0;
+        let val2 = 0;
+
+        node1.node.transactions.forEach(node => {
+            node.forEach(t => {
+                val1 += t
+            })
+        })
+        node2.node.transactions.forEach(node => {
+            node.forEach(t => {
+                val2 += t
+            })
+        })
+
+        if(val1 > val2) {
+            return 1
+        } else if (val1 < val2) {
             return -1
         } else {
             return 0
@@ -100,13 +125,13 @@ export class TransactionsGrid {
                 this.addTransaction(
                     t.from, 
                     t.to, 
-                    t.amount,
+                    Number(t.amount),
                     t.timestamp);
             }
         })
 
         let nodeArray = Array.from(this.nodes, ([id, node]) => ({id, node}));
-        nodeArray.sort(this.compareNode)
+        nodeArray.sort(this.compareNodeTotals)
         nodeArray.reverse()
         console.log(nodeArray)
     }
@@ -114,13 +139,13 @@ export class TransactionsGrid {
     // load blocks close enough to position
     loadBlocks(x, y, arrayLen) {
         let nodeArray = Array.from(this.nodes, ([id, node]) => ({id, node}));
-        nodeArray.sort(this.compareNode)
+        nodeArray.sort(this.compareNodeTotals)
         nodeArray.reverse()
 
         let arrayEndX = x + arrayLen < nodeArray.length ? x + arrayLen : nodeArray.length;
         let arrayEndY = y + arrayLen < nodeArray.length ? y + arrayLen : nodeArray.length;
 
-        console.log("getting max amount")
+        // console.log("getting max amount")
         // get max amount
         for(let i = 0; i < arrayLen; i++) {
             for(let k = 0; k < arrayLen; k++) {
@@ -131,8 +156,8 @@ export class TransactionsGrid {
             }
         }
 
-        console.log("loading blocks:", x, y)
-        console.log(arrayEndX, arrayEndY)
+        // console.log("loading blocks:", x, y)
+        // console.log(arra yEndX, arrayEndY)
         for(let i = x; i < arrayEndX; i++) {
             for(let k = y; k < arrayEndY; k++) {
                 if(!this.loadedBlocks.get([i, k].toString())) {
@@ -147,7 +172,30 @@ export class TransactionsGrid {
                     this.scene.add(newBlock.getCube());
 
                     // add to map
-                    this.loadedBlocks.set([x, y].toString(), newBlock);
+                    this.loadedBlocks.set([i, k].toString(), newBlock);
+                    this.blocks.push(newBlock)
+                }
+            }
+        }
+    }
+
+    unloadBlocks(x, y, arrayLen) {
+        let nodeArray = Array.from(this.nodes, ([id, node]) => ({id, node}));
+        nodeArray.sort(this.compareNodeTotals)
+        nodeArray.reverse()
+
+        let arrayEndX = x + arrayLen < nodeArray.length ? x + arrayLen : nodeArray.length;
+        let arrayEndY = y + arrayLen < nodeArray.length ? y + arrayLen : nodeArray.length;
+
+        for(let i = x; i < arrayEndX; i++) {
+            for(let k = y; k < arrayEndY; k++) {
+                if(this.loadedBlocks.get([i, k].toString())) {
+                    // add to map
+                    let block = this.loadedBlocks.get([i, k].toString());
+                    this.scene.remove(block.getCube())
+                    // this.blocks.delete(block)
+                    this.blocks.splice(this.blocks.indexOf(block), 1)
+                    this.loadedBlocks.set([i, k].toString(), null)
                 }
             }
         }
@@ -188,6 +236,7 @@ export class TransactionsGrid {
 
     getBlocks() {
         return this.blocks;
+        // return Array.from(this.loadedBlocks, ([id, node]) => ({id, node}));
     }
 
     clearData() {
@@ -223,7 +272,11 @@ export class TransactionBlock {
     }
 
     recolor(scale) {
-        this.color = getColorFromRamp(COLORS, scale);
+        if(scale == 0) {
+            this.color = getColorFromRamp(COLORS2, 0)
+        } else {
+            this.color = getColorFromRamp(COLORS, scale);
+        }
         this.cube.material.color = this.color;
 
         this.hlColor = getColorFromRamp([this.color, new T.Color("white")], 0.5);

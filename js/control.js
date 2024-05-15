@@ -1,12 +1,12 @@
 import * as T from 'three';
 import { Container, TextBox } from './pageElements';
 
-const CAMERA_SPEED = 10;
+const CAMERA_SPEED = 15;
 const CAMERA_DECEL_SPEED = 0.99;
 const CAMERA_MAX_Y = 30;
 const CAMERA_MIN_Y = 5;
 
-const CHUNK_SIZE = 20;
+const CHUNK_SIZE = 3;
 
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -247,16 +247,47 @@ export class SceneControl {
 
             this.bindCamera();
         }
-        let curChunkX = Math.floor(this.camera.position.x / CHUNK_SIZE)
+
+        // chunk loading
+
+        // let curChunkX = Math.floor(this.camera.position.x / CHUNK_SIZE)
+        // let curChunkZ = Math.floor(this.camera.position.z / CHUNK_SIZE)
+        let range = 3;
+
+        for(let i = -range; i <= range; i++) {
+            for(let k = -range; k <= range; k++) {
+                let curChunkX = Math.floor(this.camera.position.x / CHUNK_SIZE) + i
+                let curChunkZ = Math.floor(this.camera.position.z / CHUNK_SIZE) + k
+
+                if(this.isDataLoaded && curChunkX >= 0 && curChunkZ >= 0) {
+                    if(!this.loadedChunks.get([curChunkX, curChunkZ].toString())) {
+                        console.log("new chunk loaded:", curChunkX, curChunkZ)
+                        this.loadedChunks.set([curChunkX, curChunkZ].toString(), true)
+                        this.transactionsGrid.loadBlocks(curChunkX*CHUNK_SIZE, curChunkZ*CHUNK_SIZE, CHUNK_SIZE)
+                        
+                    }
+                } 
+            }
+        }  
+
+        // unload chunks
+
+        let unloadRange = 3
+        let curChunkX = Math.floor(this.camera.position.x / CHUNK_SIZE) 
         let curChunkZ = Math.floor(this.camera.position.z / CHUNK_SIZE)
 
-        if(this.isDataLoaded && curChunkX >= 0 && curChunkZ >= 0) {
-            if(!this.loadedChunks.get([curChunkX, curChunkZ].toString())) {
-                console.log("new chunk loaded:", curChunkX, curChunkZ)
-                this.loadedChunks.set([curChunkX, curChunkZ].toString(), true)
-                this.transactionsGrid.loadBlocks(curChunkX*CHUNK_SIZE, curChunkZ*CHUNK_SIZE, CHUNK_SIZE)
-            }
-        }   
+        let chunksArr = Array.from(this.loadedChunks)
+        chunksArr.forEach(chunk => {
+            let coords = chunk[0].split(',').map(v => Number(v))
+            if(this.loadedChunks.get([coords[0], coords[1]].toString())) {
+                if(Math.abs(coords[0] - curChunkX) > unloadRange || Math.abs(coords[1] - curChunkZ) > unloadRange) {
+                    console.log("unloading block", coords[0], coords[1])
+                    this.loadedChunks.set([coords[0], coords[1]].toString(), false)
+                    this.transactionsGrid.unloadBlocks(coords[0]*CHUNK_SIZE, coords[1]*CHUNK_SIZE, CHUNK_SIZE)
+                }
+            }           
+        })
+
     }
 
     bindCamera() {

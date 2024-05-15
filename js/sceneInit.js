@@ -1,7 +1,7 @@
 import * as T from 'three';
 
 const BACKGROUND_COLOR = 0x041a29
-const CAMERA_OFFSET = 3;
+const CAMERA_OFFSET = 0;
 const CAMERA_HEIGHT = 10;
 const LIGHT_HEIGHT = 8;
 const LIGHT_DIST = 5;

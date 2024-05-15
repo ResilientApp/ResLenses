@@ -99,11 +99,11 @@ export async function test() {
   //     console.error('Error:', error);
   // }
 
-  axios.get('https://crow.resilientdb.com/v1/transactions')
-	.then((response) => {
-		console.log(response.data);
-		// console.log("saving resdb data")
-		// saveJSON(response.data, "./resDB_data.json")
-	});
+  // axios.get('https://crow.resilientdb.com/v1/transactions')
+	// .then((response) => {
+	// 	console.log(response.data);
+	// 	// console.log("saving resdb data")
+	// 	// saveJSON(response.data, "./resDB_data.json")
+	// });
 }
 
