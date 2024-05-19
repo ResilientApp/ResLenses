@@ -176,13 +176,31 @@ button:hover {
         -o-user-select: none;
 }
 
-#Update-div {
-    padding: 10px;
+#SwitchButton-div {
+    padding: 5px;
 }
 
-#Update-div > * {
+#SwitchButton-div > * {
     width: calc(20%);
-    height: 20px;
+    height: 30px;
+}
+
+#ToggleSortButton-div {
+    padding: 5px;
+}
+
+#ToggleSortButton-div > * {
+    width: calc(20%);
+    height: 30px;
+}
+
+#ToggleView-div {
+    padding: 5px;
+}
+
+#ToggleView-div > * {
+    width: calc(20%);
+    height: 30px;
 }
 
 /* https://codingartistweb.com/2021/06/double-range-slider-html-css-javascript/*/

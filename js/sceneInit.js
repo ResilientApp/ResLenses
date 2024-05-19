@@ -22,7 +22,7 @@ export function sceneInit() {
 	let ambientLight = new T.AmbientLight(0xffffff, 0.3);
 	scene.add(ambientLight);
 
-	let pointLight = new T.PointLight(0xff00ff, LIGHT_STRENGTH);
+	let pointLight = new T.PointLight(0xffffff, LIGHT_STRENGTH);
 	pointLight.position.set(-LIGHT_DIST, LIGHT_HEIGHT, -LIGHT_DIST-CAMERA_OFFSET);
 
     let pointLight2 = new T.PointLight(0xffffff, LIGHT_STRENGTH);

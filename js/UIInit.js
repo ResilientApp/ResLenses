@@ -25,7 +25,7 @@ function getDateObj(value) {
     return date;
 }
 
-export function initUI(transactionsGrid, data) {
+export function initUI(transactionsGrid, control, data) {
     /* UI */
     let titleDiv = document.createElement('div');
     titleDiv.id = "titleDiv";
@@ -35,7 +35,7 @@ export function initUI(transactionsGrid, data) {
     helpDiv.id = "helpDiv";
     document.body.appendChild(helpDiv)
 
-    let title = new TextBox("title", "titleDiv", "UTXO LENSES");
+    let title = new TextBox("title", "titleDiv", "RES LENSES");
 
     let sideDiv = document.createElement('div');
     sideDiv.id = "sideDiv";
@@ -51,6 +51,7 @@ export function initUI(transactionsGrid, data) {
 
     let bottomDiv = document.createElement('div');
     bottomDiv.id = "bottomDiv";
+    // bottomDiv.classList.add("horizontalContainer");
     bottomDiv.onmousedown = () => {
         transactionsGrid.canDrag = false;
     }
@@ -71,38 +72,111 @@ export function initUI(transactionsGrid, data) {
 
     let numMonths = Number(YEARS.length) * Number(MONTHS.length) - 1;
 
-    let dateRangeText = new TextBox("date range", "bottomDiv", "");
+    // let dateRangeText = new TextBox("date range", "bottomDiv", "");
 
-    let sliderDiv = new Element("sliderBar", "bottomDiv");
+    // let sliderDiv = new Element("sliderBar", "bottomDiv");
 	
-    let slider1 = new Slider("Slider 1", "bottomDiv", 0, numMonths, 1, 0);
-    let slider2 = new Slider("Slider 2", "bottomDiv", 0, numMonths, 1, numMonths);
+    // let slider1 = new Slider("Slider 1", "bottomDiv", 0, numMonths, 1, 0);
+    // let slider2 = new Slider("Slider 2", "bottomDiv", 0, numMonths, 1, numMonths);
     
-    slider1.label.innerHTML = getDate((Number(numMonths) - 5));
-    slider2.label.innerHTML = getDate(numMonths);
+    // slider1.label.innerHTML = getDate((Number(numMonths) - 5));
+    // slider2.label.innerHTML = getDate(numMonths);
 
-    slider1.slider.oninput = () => {
-        if(slider1.slider.value > Number(slider2.slider.value) - 1) {
-            slider2.slider.value = Number(slider1.slider.value) + 1;
-        }
-        if(slider1.slider.value > numMonths-1) {
-            slider1.slider.value = numMonths-1;
-        }
-        updateBar()
-    }
+    // slider1.slider.oninput = () => {
+    //     if(slider1.slider.value > Number(slider2.slider.value) - 1) {
+    //         slider2.slider.value = Number(slider1.slider.value) + 1;
+    //     }
+    //     if(slider1.slider.value > numMonths-1) {
+    //         slider1.slider.value = numMonths-1;
+    //     }
+    //     updateBar()
+    // }
 
-    slider2.slider.oninput = () => {
-        if(slider1.slider.value > Number(slider2.slider.value) - 1) {
-            slider1.slider.value = Number(slider2.slider.value) - 1;
-        }
-        if(slider2.slider.value < 1) {
-            slider2.slider.value = 1;
-        }
-        updateBar()
-    }
+    // slider2.slider.oninput = () => {
+    //     if(slider1.slider.value > Number(slider2.slider.value) - 1) {
+    //         slider1.slider.value = Number(slider2.slider.value) - 1;
+    //     }
+    //     if(slider2.slider.value < 1) {
+    //         slider2.slider.value = 1;
+    //     }
+    //     updateBar()
+    // }
 
-    let updateButton = new Button("Update", "bottomDiv", () => {
-        updateGrid();
+    // let updateButton = new Button("Update", "bottomDiv", () => {
+    //     updateGrid();
+    // })
+
+    let switchDataButton = new Button("SwitchButton", "bottomDiv")
+    switchDataButton.button.innerHTML = "Switch to ETH";
+    switchDataButton.button.addEventListener("click", () => {
+        let file;
+        let buttonName;
+        if(switchDataButton.button.innerHTML == "Switch to RESDB") {
+            buttonName = "Switch to ETH";
+            file = "http://localhost:8080/getData_RESDB"
+        } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
+            buttonName = "Switch to RESDB";
+            file = "http://localhost:8080/getData_ETH"
+        } else {
+            return
+        }
+        switchDataButton.button.innerHTML = "..."
+        control.isDataLoaded = false;
+        getData(file, (data1) => {
+            // transactionsGrid.clearData();
+            control.isDataLoaded = true;
+            control.loadedChunks = new Map();
+            transactionsGrid.loadData(data1);
+            switchDataButton.button.innerHTML = buttonName;
+        })
+    });
+
+    let toggleSortButton = new Button("ToggleSortButton", "bottomDiv")
+    toggleSortButton.button.innerHTML = "Sort By Num Transactions";
+    toggleSortButton.button.addEventListener("click", () => {
+        let file;
+        if(switchDataButton.button.innerHTML == "Switch to RESDB") {
+            file = "http://localhost:8080/getData_ETH"
+        } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
+            file = "http://localhost:8080/getData_RESDB"
+        }
+        control.isDataLoaded = false;
+
+        let buttonName;
+        if(toggleSortButton.button.innerHTML == "Sort By Num Transactions") {
+            transactionsGrid.toggleSort = 1;
+            buttonName = "Sort By Transactions Total";
+        } else if(toggleSortButton.button.innerHTML == "Sort By Transactions Total") {
+            transactionsGrid.toggleSort = 2;
+            buttonName = "Sort By Num Transactions";
+        } else {
+            return
+        }
+        toggleSortButton.button.innerHTML = "..."
+
+        getData(file, (data1) => {
+            // transactionsGrid.clearData();
+            control.isDataLoaded = true;
+            control.loadedChunks = new Map();
+            transactionsGrid.loadData(data1);
+            toggleSortButton.button.innerHTML = buttonName;
+        })
+    })
+
+    let toggleViewButton = new Button("ToggleView", "bottomDiv")
+    toggleViewButton.button.innerHTML = "Bar View";
+    toggleViewButton.button.addEventListener("click", () => {
+        if(toggleViewButton.button.innerHTML == "Grid View") {
+            control.setCamera(0);
+            toggleViewButton.button.innerHTML = "Bar View";
+        } else if(toggleViewButton.button.innerHTML == "Bar View") {
+            control.setCamera(1);
+            toggleViewButton.button.innerHTML = "Grid View";
+        } else {
+            return
+        }
+        transactionsGrid.clearBlocks();
+        control.clearChunks();
     })
 
     let showHelp = false;
@@ -123,26 +197,26 @@ export function initUI(transactionsGrid, data) {
         }
     }
 
-    updateBar()
+    // updateBar()
 
-    function updateBar(){
-        slider1.label.innerHTML = getDate(slider1.slider.value);
-        slider2.label.innerHTML = getDate(slider2.slider.value);
+    // function updateBar(){
+    //     slider1.label.innerHTML = getDate(slider1.slider.value);
+    //     slider2.label.innerHTML = getDate(slider2.slider.value);
 
-        let percent1 = (slider1.slider.value / numMonths) * 100;
-        let percent2 = (slider2.slider.value / numMonths) * 100;
+    //     let percent1 = (slider1.slider.value / numMonths) * 100;
+    //     let percent2 = (slider2.slider.value / numMonths) * 100;
         
-        sliderDiv.div.style.background = `linear-gradient(to right, #dadae5 ${percent1}% , #3264fe ${percent1}% , #3264fe ${percent2}%, #dadae5 ${percent2}%)`;
+    //     sliderDiv.div.style.background = `linear-gradient(to right, #dadae5 ${percent1}% , #3264fe ${percent1}% , #3264fe ${percent2}%, #dadae5 ${percent2}%)`;
 
-        dateRangeText.label.innerHTML = getDate(slider1.slider.value) + " - " + getDate(slider2.slider.value)
-    }
+    //     dateRangeText.label.innerHTML = getDate(slider1.slider.value) + " - " + getDate(slider2.slider.value)
+    // }
 
-    function updateGrid() {
-        let startTime = getDateObj(slider1.slider.value)
-        let endTime = getDateObj(slider2.slider.value)
+    // function updateGrid() {
+    //     let startTime = getDateObj(slider1.slider.value)
+    //     let endTime = getDateObj(slider2.slider.value)
 
-        transactionsGrid.clearData();
-        transactionsGrid.loadData(data, startTime, endTime)
-        transactionsGrid.setBlocks();
-    }
+    //     transactionsGrid.clearData();
+    //     transactionsGrid.loadData(data, startTime, endTime)
+    //     transactionsGrid.setBlocks();
+    // }
 }

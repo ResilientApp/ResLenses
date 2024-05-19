@@ -23,9 +23,10 @@ export function startScene() {
 
 	// default file
 	// let file = "https://raw.githubusercontent.com/gjnguyen18/utxo-lenses/master/transformed_data2.json"
-	let file = "http://localhost:8080/testGet?start=1-2-14-23-42&end=1-3-13-11-12"
+	let file = "http://localhost:8080/getData_RESDB"
+	// let file = "http://localhost:8080/getData_ETH"
 
-	console.log(encodeURIComponent("http://127.0.0.1:5501/api/v1/?startTime=2022-11-01T00:00:00Z&endTime=2023-11-30T23:59:59Z"))
+	// console.log(encodeURIComponent("http://127.0.0.1:5501/api/v1/?startTime=2022-11-01T00:00:00Z&endTime=2023-11-30T23:59:59Z"))
 
 	// if query contains link, use that instead
 	let urlSearchParams = new URLSearchParams(window.location.search);
@@ -34,15 +35,11 @@ export function startScene() {
 	if (link) {
 		file = link;
 	} 
+
 	getData(file, (data) => {
-		// load data
 		transactionsGrid.loadData(data);
-		// display grid
-		// transactionsGrid.setBlocks();
-		// transactionsGrid.loadBlocks(0, 0, 20);
 		control.isDataLoaded = true;
-		// UI init
-		initUI(transactionsGrid, data);
+		initUI(transactionsGrid, control, data);
 	})
 
 	// mouse events
@@ -72,9 +69,16 @@ export function startScene() {
 	document.body.addEventListener('dblclick', onMouseDblClick, true);
 	document.body.addEventListener('click', onMouseClick, true);
 
+	// let g = new T.BoxGeometry()
+	// let t = new T.Material()
+	// // console.log(g)
+	// let sphere = new T.Mesh(g, t)
+	// scene.add(sphere)
+
 	function animate() {
 		requestAnimationFrame(animate);
 		control.update();
+		transactionsGrid.update();
 		lights.position.x = camera.position.x;
 		lights.position.z = camera.position.z;
 		renderer.render(scene, camera);
