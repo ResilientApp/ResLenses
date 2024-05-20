@@ -175,14 +175,15 @@ export class TransactionsGrid {
                     let amount = this.getTransactionsValue(this.nodeArray[i].id, this.nodeArray[k].id);
                     let newBlock = new TransactionBlock(this.nodeArray[i].id, this.nodeArray[k].id, transactions, amount, this.allTimeMax);
                     newBlock.setPosition(
-                        (i) * (BLOCK_WIDTH + SPACING), 
-                        (k) * (BLOCK_WIDTH + SPACING));
+                        (k) * (BLOCK_WIDTH + SPACING), 
+                        (i) * (BLOCK_WIDTH + SPACING));
                     
                     if(amount >=  this.allTimeMax) {
                         console.log(amount)
                     }
                     newBlock.recolor(amount / this.allTimeMax);
                     this.scene.add(newBlock.getCube());
+                    console.log("load add")
 
                     // add to map
                     this.loadedBlocks.set([i, k].toString(), newBlock);
@@ -249,27 +250,31 @@ export class TransactionsGrid {
         let arrayEndX = x + arrayLen < this.nodeArray.length ? x + arrayLen : this.nodeArray.length;
 
         for(let i = x; i < arrayEndX; i++) {
-            let total = 0
-            let transactions = []
-            this.nodeArray[i].node.transactions.forEach(trans => {
-                trans.forEach(val => {
-                    total += val
+            if(!this.loadedBlocks.get([i, 0].toString())) {
+                let total = 0
+                let transactions = []
+                console.log(this.nodeArray[i])
+                // console.log(this.nodeArray[i].node.transactions)
+                this.nodeArray[i].node.transactions.forEach(trans => {
+                    trans.forEach(val => {
+                        total += val
+                    })
+                    transactions.push(trans)
                 })
-                transactions.push(trans)
-            })
-            let newBlock = new TransactionBlock(this.nodeArray[i].id, "NULL", transactions, total, this.allTimeMax);
-            newBlock.setPosition(
-                (i - (arrayLen / 2)) * (BLOCK_WIDTH + SPACING), 
-                (0 - (arrayLen / 2)) * (BLOCK_WIDTH + SPACING));
-            
-            newBlock.recolor(total / this.allTimeMax);
-            // newBlock.getCube().geometry.scale(0.8, 1, 0.8)
-            this.scene.add(newBlock.getCube());
-
-            // add to map
-            this.loadedBlocks.set([i, 0].toString(), newBlock);
-            this.loadingBlocks.set([i, 0].toString(), newBlock);
-            this.blocks.push(newBlock)
+                let newBlock = new TransactionBlock(this.nodeArray[i].id, "NULL", transactions, total, this.allTimeMax);
+                newBlock.setPosition(
+                    (i) * (BLOCK_WIDTH + SPACING), 
+                    (0) * (BLOCK_WIDTH + SPACING));
+                
+                newBlock.recolor(total / this.allTimeMax);
+                // newBlock.getCube().geometry.scale(0.8, 1, 0.8)
+                this.scene.add(newBlock.getCube());
+                console.log("add bar blocks")
+                // add to map
+                this.loadedBlocks.set([i, 0].toString(), newBlock);
+                this.loadingBlocks.set([i, 0].toString(), newBlock);
+                this.blocks.push(newBlock)
+            }
         }
     }
 

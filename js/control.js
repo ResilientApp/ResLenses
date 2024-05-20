@@ -15,6 +15,11 @@ const SPACING = 0.3;
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+// t should be between 0 and 1
+export function lerp(a, b, t) {
+    return a + (b - a) * t;
+}
+
 export class SceneControl {
     constructor(scene, camera, transactionsGrid) {
         this.scene = scene;
@@ -33,7 +38,19 @@ export class SceneControl {
 
         this.loadedChunks = new Map();
         this.isDataLoaded = false;
-        this.cameraMode = 0;
+        this.cameraMode = 0; // 0 is grid, 1 is bar view
+        this.transitioning = false;
+
+        this.cameraGridView = {
+            position: new T.Vector3(0, 10, 0),
+            lookAtDelta: new T.Vector3(0, -1, 0),
+        };
+        this.cameraBarView = {
+            position: new T.Vector3(0, 2, 8),
+            lookAtDelta: new T.Vector3(0, -1, -3),
+        }
+        this.storedCamera;
+        this.cameraTVal = 0;
     }
 
     mouseUpdate() {
@@ -56,36 +73,36 @@ export class SceneControl {
 
         // find first object intersecting with mouse, then sets it to highlight, unhighlight other blocks
         let intersect = this.raycaster.intersectObjects(cubeMeshes, false);
-        if(intersect.length > 0 && this.transactionsGrid.canHover) {
+        if (intersect.length > 0 && this.transactionsGrid.canHover) {
             let intersectObj = intersect[0].object;
             blocks.flat().forEach(block => {
-                if(intersectObj == block.getCube()) {
+                if (intersectObj == block.getCube()) {
                     block.toggleHighlight(true);
                     this.highlightedBlock = block;
-                } 
+                }
                 else {
                     block.toggleHighlight(false);
                 }
             })
-        } 
+        }
         else {
-            if(this.highlightedBlock) {
+            if (this.highlightedBlock) {
                 this.highlightedBlock.toggleHighlight(false);
             }
             this.highlightedBlock = null;
         }
 
         // update highlight ui
-        if(this.highlightedBlock && this.transactionsGrid.displayFrom) {
-            this.transactionsGrid.displayFrom.label.innerHTML = 
+        if (this.highlightedBlock && this.transactionsGrid.displayFrom) {
+            this.transactionsGrid.displayFrom.label.innerHTML =
                 "From: " + this.highlightedBlock.node1
-            this.transactionsGrid.displayTo.label.innerHTML = 
-                "To: " + this.highlightedBlock.node2 
-            this.transactionsGrid.displayAmount.label.innerHTML = 
+            this.transactionsGrid.displayTo.label.innerHTML =
+                "To: " + this.highlightedBlock.node2
+            this.transactionsGrid.displayAmount.label.innerHTML =
                 "Transactions Sum: " + this.highlightedBlock.getTransactionsValue();
         }
 
-        if(this.isMouseHold && this.transactionsGrid.canDrag) {
+        if (this.isMouseHold && this.transactionsGrid.canDrag) {
             let deltaX = this.mouse.x - this.lastMouse.x;
             let deltaY = this.mouse.y - this.lastMouse.y;
 
@@ -96,7 +113,7 @@ export class SceneControl {
             this.cameraAccel.y = deltaY;
 
             this.bindCamera();
-        } 
+        }
     }
 
     onMouseDown(event) {
@@ -113,8 +130,8 @@ export class SceneControl {
         this.mouseUpdate()
         this.isMouseHold = false;
         this.transactionsGrid.canDrag = true;
-        if(this.clickedBlock && this.transactionsGrid.canHover && this.highlightedBlock) {
-            if(this.selectedBlock) {
+        if (this.clickedBlock && this.transactionsGrid.canHover && this.highlightedBlock) {
+            if (this.selectedBlock) {
                 this.selectedBlock.toggleSelect(false);
             }
 
@@ -128,7 +145,7 @@ export class SceneControl {
             this.hlLight.position.z = this.selectedBlock.getCube().position.z;
             this.scene.add(this.hlLight);
 
-            if(this.selectedDiv) {
+            if (this.selectedDiv) {
                 this.selectedDiv.removeDiv();
             }
 
@@ -138,22 +155,23 @@ export class SceneControl {
             let displayTo = new TextBox("transaction to", "sideDiv", "To: " + String(this.clickedBlock.node2).substring(0, 20) + "...");
             this.selectedDiv.addBlock(displayFrom, displayTo)
             let count = 0;
-            this.clickedBlock.transactions.sort(function(a, b) {
+            this.clickedBlock.transactions.sort(function (a, b) {
                 return new Date(b.time) - new Date(a.time);
             });
+            // console.log(this.clickedBlock.transactions)
             this.clickedBlock.transactions.forEach(t => {
-                if(t.amount > 0) {
+                if (t.amount > 0) {
                     let transactionContainer = new Container("tCont", "sideDiv", true);
                     let text = new TextBox("transaction amount", "sideDiv", "Amount: " + String(t.amount));
                     let date = new Date(t.time);
-                    let text2 = new TextBox("transaction time", "sideDiv", "Time: " + 
+                    let text2 = new TextBox("transaction time", "sideDiv", "Time: " +
                         String(date.getMonth()) + "-" + String(date.getDay()) + "-" + String(date.getFullYear()));
-                    transactionContainer.addBlock(text,text2);
+                    transactionContainer.addBlock(text, text2);
                     this.selectedDiv.addBlock(transactionContainer)
                     count += 1;
                 }
             })
-            if(count == 0) {
+            if (count == 0) {
                 let transactionContainer = new Container("tCont", "sideDiv", true);
                 let text = new TextBox("transaction", "sideDiv", "Amount: NA");
                 transactionContainer.addBlock(text);
@@ -168,12 +186,12 @@ export class SceneControl {
         let dx = event.deltaX;
         let dy = event.deltaY;
         // console.log(dx, dy)
-        if(dy > 0 && this.camera.position.y < CAMERA_MAX_Y) {
-            if(this.cameraMode == 0) {
+        if (dy > 0 && this.camera.position.y < CAMERA_MAX_Y) {
+            if (this.cameraMode == 0) {
                 this.camera.position.y += 0.2;
             }
         } else if (dy < 0 && this.camera.position.y > CAMERA_MIN_Y) {
-            if(this.cameraMode == 0) {
+            if (this.cameraMode == 0) {
                 this.camera.position.y -= 0.2;
             }
         }
@@ -182,8 +200,8 @@ export class SceneControl {
     onMouseUp(event) {
         this.isMouseHold = false;
         this.transactionsGrid.canDrag = true;
-        if(this.lastMouse.x == this.mouse.x && this.lastMouse.y == this.mouse.y) {
-            if(this.clickedBlock) {
+        if (this.lastMouse.x == this.mouse.x && this.lastMouse.y == this.mouse.y) {
+            if (this.clickedBlock) {
                 this.clickedBlock.toggleSelect(false);
                 let sideDiv = document.getElementById("sideDiv");
                 sideDiv.style.width = "0px";
@@ -195,67 +213,104 @@ export class SceneControl {
 
     update() {
         // camera movement
-        if(!this.isMouseHold)  {
-            this.cameraAccel.x *= CAMERA_DECEL_SPEED;
-            this.cameraAccel.y *= CAMERA_DECEL_SPEED;
-
-            if(Math.abs(this.cameraAccel.x) < 0.005) {
-                this.cameraAccel.x = 0;
-            }
-            if(Math.abs(this.cameraAccel.y) < 0.005) {
-                this.cameraAccel.y = 0;
+        if (this.transitioning) {
+            this.cameraTVal += 0.008;
+            if (this.cameraTVal >= 1) {
+                this.transitioning = false;
+                this.cameraTVal = 1
+                console.log("transition:", 1)
             }
 
-            this.camera.position.x += -this.cameraAccel.x;
-            this.camera.position.z += this.cameraAccel.y;
+            let toCamera;
+            if(this.cameraMode == 0) {
+                toCamera = this.cameraGridView
+            } else {
+                toCamera = this.cameraBarView
+            }
 
-            this.bindCamera();
-        }
+            // console.log(this.cameraGridView.position, this.cameraBarView.position)
+            let posX = lerp(this.storedCamera.position.x, toCamera.position.x, this.cameraTVal);
+            let posY = lerp(this.storedCamera.position.y, toCamera.position.y, this.cameraTVal);
+            let posZ = lerp(this.storedCamera.position.z, toCamera.position.z, this.cameraTVal);
 
-        if(this.cameraMode == 1) {
-            this.camera.position.z = 3
+            let lookX = lerp(this.storedCamera.lookAtDelta.x, toCamera.lookAtDelta.x, this.cameraTVal);
+            let lookY = lerp(this.storedCamera.lookAtDelta.y, toCamera.lookAtDelta.y, this.cameraTVal);
+            let lookZ = lerp(this.storedCamera.lookAtDelta.z, toCamera.lookAtDelta.z, this.cameraTVal);
+
+            // console.log(posX, posY, posZ)
+            // console.log(lookX, lookY, lookZ)
+            this.camera.position.set(this.camera.position.x, posY, posZ)
+            this.camera.lookAt(this.camera.position.x + lookX, this.camera.position.y + lookY, this.camera.position.z + lookZ)
+
+            // this.transitioning = false;
+
+            if (this.cameraTVal >= 1) {
+                this.cameraTVal = 0;
+                // console.log("transition2:", 1)
+            }
+        } else {
+            if (!this.isMouseHold) {
+                this.cameraAccel.x *= CAMERA_DECEL_SPEED;
+                this.cameraAccel.y *= CAMERA_DECEL_SPEED;
+
+                if (Math.abs(this.cameraAccel.x) < 0.005) {
+                    this.cameraAccel.x = 0;
+                }
+                if (Math.abs(this.cameraAccel.y) < 0.005) {
+                    this.cameraAccel.y = 0;
+                }
+
+                this.camera.position.x += -this.cameraAccel.x;
+                this.camera.position.z += this.cameraAccel.y;
+
+                this.bindCamera();
+            }
+
+            if (this.cameraMode == 1) {
+                this.camera.position.z = this.cameraBarView.position.z
+            }
         }
 
         // chunk loading
 
-        if(this.isDataLoaded && this.transactionsGrid.isLoaded) {
+        if (this.isDataLoaded && this.transactionsGrid.isLoaded) {
             let chunkSizeTotal = (BLOCK_WIDTH + SPACING) * CHUNK_SIZE
 
-            for(let i = -LOAD_RANGE; i <= LOAD_RANGE; i++) {
-                for(let k = -LOAD_RANGE; k <= LOAD_RANGE; k++) {
+            for (let i = -LOAD_RANGE; i <= LOAD_RANGE; i++) {
+                for (let k = -LOAD_RANGE; k <= LOAD_RANGE; k++) {
                     let curChunkX = Math.floor(this.camera.position.x / chunkSizeTotal) + i
                     let curChunkZ = Math.floor(this.camera.position.z / chunkSizeTotal) + k
-    
-                    if(curChunkX >= 0 && curChunkZ >= 0) {
-                        if(!this.loadedChunks.get([curChunkX, curChunkZ].toString())) {
+
+                    if (curChunkX >= 0 && curChunkZ >= 0) {
+                        if (!this.loadedChunks.get([curChunkX, curChunkZ].toString())) {
                             // console.log("new chunk loaded:", curChunkX, curChunkZ)
                             this.loadedChunks.set([curChunkX, curChunkZ].toString(), true)
-                            if(this.cameraMode == 0) {
-                                this.transactionsGrid.loadBlocks(curChunkX*CHUNK_SIZE, curChunkZ*CHUNK_SIZE, CHUNK_SIZE)
+                            if (this.cameraMode == 0) {
+                                this.transactionsGrid.loadBlocks(curChunkX * CHUNK_SIZE, curChunkZ * CHUNK_SIZE, CHUNK_SIZE)
                             } else {
-                                this.transactionsGrid.loadBars(curChunkX*CHUNK_SIZE, CHUNK_SIZE)
+                                this.transactionsGrid.loadBars(curChunkX * CHUNK_SIZE, CHUNK_SIZE)
                             }
                         }
-                    } 
+                    }
                 }
-            }  
-    
+            }
+
             // unload chunks
-    
-            let curChunkX = Math.floor(this.camera.position.x / chunkSizeTotal) 
-            let curChunkZ = Math.floor(this.camera.position.z / chunkSizeTotal) 
-    
+
+            let curChunkX = Math.floor(this.camera.position.x / chunkSizeTotal)
+            let curChunkZ = Math.floor(this.camera.position.z / chunkSizeTotal)
+
             let chunksArr = Array.from(this.loadedChunks)
             chunksArr.forEach(chunk => {
                 let coords = chunk[0].split(',').map(v => Number(v))
-                if(this.loadedChunks.get([coords[0], coords[1]].toString())) {
-                    if(Math.abs(coords[0] - curChunkX) > UNLOAD_RANGE || Math.abs(coords[1] - curChunkZ) > UNLOAD_RANGE) {
+                if (this.loadedChunks.get([coords[0], coords[1]].toString())) {
+                    if (Math.abs(coords[0] - curChunkX) > UNLOAD_RANGE || Math.abs(coords[1] - curChunkZ) > UNLOAD_RANGE) {
                         // console.log("unloading block", coords[0], coords[1])
                         this.loadedChunks.set([coords[0], coords[1]].toString(), false)
-                        this.transactionsGrid.unloadBlocks(coords[0]*CHUNK_SIZE, coords[1]*CHUNK_SIZE, CHUNK_SIZE)
+                        this.transactionsGrid.unloadBlocks(coords[0] * CHUNK_SIZE, coords[1] * CHUNK_SIZE, CHUNK_SIZE)
                         // this.transactionsGrid.unloadBlocks(coords[0]*CHUNK_SIZE, coords[1]*CHUNK_SIZE, CHUNK_SIZE)
                     }
-                }           
+                }
             })
         }
 
@@ -267,37 +322,39 @@ export class SceneControl {
     }
 
     setCamera(toggle) {
-        if(toggle == 0) { // top down grid view
-            let camPos = this.camera.position
-            this.camera.lookAt(camPos.x, camPos.y - 1, camPos.z)
-            this.camera.position.y = 10
+        this.transitioning = true;
+        if (toggle == 0) { // top down grid view
+            this.storedCamera = {
+                position: this.camera.position.clone(),
+                lookAtDelta: this.cameraBarView.lookAtDelta
+            }
         }
-        else if(toggle == 1) { // side bar view
-            let camPos = this.camera.position
-            this.camera.lookAt(camPos.x, camPos.y - 1, camPos.z - 2)
-            this.camera.position.y = 7
-            // this.camera.update();
+        else if (toggle == 1) { // side bar view
+            this.storedCamera = {
+                position: this.camera.position.clone(),
+                lookAtDelta: this.cameraGridView.lookAtDelta
+            }
         }
         this.cameraMode = toggle;
     }
 
     bindCamera() {
-        if(this.isDataLoaded) {
-            if(!this.transactionsGrid.nodeArray) {
+        if (this.isDataLoaded) {
+            if (!this.transactionsGrid.nodeArray) {
                 console.log("no array yet")
                 return
             }
             let maxCameraRange = (BLOCK_WIDTH + SPACING) * this.transactionsGrid.nodeArray.length
-            if(this.camera.position.x > maxCameraRange) {
+            if (this.camera.position.x > maxCameraRange) {
                 this.camera.position.x = maxCameraRange
             }
-            if(this.camera.position.x < 0) {
+            if (this.camera.position.x < 0) {
                 this.camera.position.x = 0
             }
-            if(this.camera.position.z > maxCameraRange) {
+            if (this.camera.position.z > maxCameraRange) {
                 this.camera.position.z = maxCameraRange
             }
-            if(this.camera.position.z < 0) {
+            if (this.camera.position.z < 0) {
                 this.camera.position.z = 0
             }
         }
