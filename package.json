@@ -19,6 +19,7 @@
     "web3": "^4.4.0"
   },
   "devDependencies": {
+    "git-pages": "^0.8.1",
     "vite": "^5.2.11"
   }
 }
