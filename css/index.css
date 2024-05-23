@@ -211,6 +211,40 @@ button:hover {
     height: 30px;
 }
 
+#addressDiv1 {
+    color: white;
+    width: 3000px;
+    height: 4px;
+    position: absolute;
+    padding: 0px;
+    font-size: 12px;
+    /* font-family:Impact; */
+    text-align: right;
+    background-color: rgba(0, 255, 0, 0.7);
+    /* transform: rotate(90deg) */
+}
+
+#addressDiv2 {
+    color: white;
+    width: 3000px;
+    height: 4px;
+    position: absolute;
+    padding: 0px;
+    font-size: 12px;
+    /* font-family:Impact; */
+    text-align: right;
+    background-color: rgba(0, 255, 255, 0.7);
+    transform: rotate(90deg);
+}
+
+#from-display-div {
+    color:#00ffff
+}
+
+#to-display-div {
+    color:#00ff00
+}
+
 /* https://codingartistweb.com/2021/06/double-range-slider-html-css-javascript/*/
 
 input[type="range"]{

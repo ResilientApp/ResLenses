@@ -1,7 +1,8 @@
 import * as T from 'three';
 import { getColorFromRamp } from './helpers';
 
-const COLORS = [new T.Color(0, 0.5, 1), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
+// const COLORS = [new T.Color(0, 0.5, 1), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
+const COLORS = [new T.Color(0, 0.7, 0.6), new T.Color(1, 1, 1)];
 const COLORS2 = [new T.Color(0.3, 0.3, 0.3), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
 const SELECT_COLOR = new T.Color(0.2, 0.7, 0.3);
 const SELECT_COLOR_HL = new T.Color(0.2, 1, 0.5);
@@ -29,18 +30,20 @@ export class TransactionsGrid {
         this.displayTo;
         this.displayAmount;
         this.maxRange = 0;
-        this.allTimeMax = 0.01;
-        this.allTimeMaxNumTrans = 1;
         this.nodeArray;
         this.toggleSort = 0 // 1 = num transactions, 0 = transactions total
         // this.deleting = false
+        this.toggleScale = 0 // 0 = normal, 1 = log scale
         this.isLoaded = false;
         this.dataToLoad;
         this.tempBlocks = [];
         this.viewTransitioning = false;
         this.camera = camera;
-        this.allTimeMaxBar = 0.01
-        this.allTimeMaxNumTransBar = 1
+        this.allTimeMax = 0.01;
+        this.allTimeMaxNumTrans = 1;
+        this.allTimeMaxBar = 0.01;
+        this.allTimeMaxNumTransBar = 1;
+        this.symmetrical = false
     }
 
     addNode(id) {
@@ -52,8 +55,8 @@ export class TransactionsGrid {
         let node1 = this.nodes.get(id1);
         let node2 = this.nodes.get(id2);
 
-        // node1.addTransaction(node2, amount);
-        node2.addTransaction(node1, amount);
+        node1.addTransactionIn(node2, amount);
+        node2.addTransactionOut(node1, amount);
 
         let key = [id1, id2].toString();
 
@@ -65,6 +68,22 @@ export class TransactionsGrid {
             time: time
         });
 
+        if(this.symmetrical) {
+            node2.addTransactionIn(node1, amount);
+            node1.addTransactionOut(node2, amount);
+
+            let key2 = [id2, id1].toString();
+
+            if(!this.transactions.get(key2)) {
+                this.transactions.set(key2, [])
+            }
+            this.transactions.get(key2).push({
+                amount: amount, 
+                time: time
+            });
+        }
+
+        // get upper limits
         let total = 0
         let count = 0
         this.transactions.get(key).forEach(t => {
@@ -78,17 +97,17 @@ export class TransactionsGrid {
             this.allTimeMaxNumTrans = count
         }
 
-        if(node1.totalTransactionsValue > this.allTimeMaxBar) {
-            this.allTimeMaxBar = node1. totalTransactionsValue
+        if(node1.totalTransactionsValueOut > this.allTimeMaxBar) {
+            this.allTimeMaxBar = node1.totalTransactionsValueOut
         }
-        if(node2.totalTransactionsValue > this.allTimeMaxBar) {
-            this.allTimeMaxBar = node2.totalTransactionsValue
+        if(node2.totalTransactionsValueOut > this.allTimeMaxBar) {
+            this.allTimeMaxBar = node2.totalTransactionsValueOut
         }
-        if(node1.numTransactions > this.allTimeMaxNumTransBar) {
-            this.allTimeMaxNumTransBar = node1.numTransactions
+        if(node1.numTransactionsOut > this.allTimeMaxNumTransBar) {
+            this.allTimeMaxNumTransBar = node1.numTransactionsOut
         }
-        if(node2.numTransactions > this.allTimeMaxNumTransBar) {
-            this.allTimeMaxNumTransBar = node2.numTransactions
+        if(node2.numTransactionsOut > this.allTimeMaxNumTransBar) {
+            this.allTimeMaxNumTransBar = node2.numTransactionsOut
         }
     }
 
@@ -122,63 +141,50 @@ export class TransactionsGrid {
     }
 
     compareNodeNumTransactions(node1, node2) {
-        if(node1.node.transactions && node2.node.transactions) {
-            return node1.node.numTransactions - node2.node.numTransactions
-        } else {
-            return 0;
-        }
+        return node2.node.numTransactionsOut - node1.node.numTransactionsOut
     }
 
     compareNodeTotals(node1, node2) {
-        let val1 = 0;
-        let val2 = 0;
-
-        node1.node.transactions.forEach(node => {
-            node.forEach(t => {
-                val1 += t.amount
-            })
-        })
-        node2.node.transactions.forEach(node => {
-            node.forEach(t => {
-                val2 += t.amount
-            })
-        })
-
-        return val1 - val2;
+        return node2.node.totalTransactionsValueOut - node1.node.totalTransactionsValueOut;
     }
 
-    sortByLargestIntersections() {
-        console.log("sort by inter")
-        let transactionsArray = Array.from(this.transactions, ([key, value]) => ({key, value}));
-        transactionsArray.sort((node1, node2) => {
-            let t1 = node1.value
-            let t2 = node2.value
-            let s1 = 0
-            let s2 = 0
-            t1.forEach(t => {s1 += t.amount})
-            t2.forEach(t => {s2 += t.amount})
-            return s1 - s2
-        })
-
-        transactionsArray.reverse();
-        // console.log(transactionsArray)
-
-        let nodeList = []
-        let nodeArray = []
-        for(let i = 0; i < transactionsArray.length; i++) {
-            let pair = transactionsArray[i].key.split(',')
-            if(nodeList.indexOf(pair[0]) == -1) {
-                nodeList.push(pair[0])
-                nodeArray.push(this.nodes.get(pair[0]))
-            }
-            if(nodeList.indexOf(pair[1]) == -1) {
-                nodeList.push(pair[1])
-                nodeArray.push(this.nodes.get(pair[1]))
-            }
-        }
-
-        this.nodeArray = nodeArray;
+    compareLargestTransaction(node1, node2) {
+        return Math.max(node2.node.largestTransactionOut, node2.node.largestTransactionIn) - 
+            Math.max(node1.node.largestTransactionOut, node1.node.largestTransactionIn)
     }
+
+    // sortByLargestIntersections() {
+    //     console.log("sort by inter")
+    //     let transactionsArray = Array.from(this.transactions, ([key, value]) => ({key, value}));
+    //     transactionsArray.sort((node1, node2) => {
+    //         let t1 = node1.value
+    //         let t2 = node2.value
+    //         let s1 = 0
+    //         let s2 = 0
+    //         t1.forEach(t => {s1 += t.amount})
+    //         t2.forEach(t => {s2 += t.amount})
+    //         return s1 - s2
+    //     })
+
+    //     transactionsArray.reverse();
+    //     // console.log(transactionsArray)
+
+    //     let nodeList = []
+    //     let nodeArray = []
+    //     for(let i = 0; i < transactionsArray.length; i++) {
+    //         let pair = transactionsArray[i].key.split(',')
+    //         if(nodeList.indexOf(pair[0]) == -1) {
+    //             nodeList.push(pair[0])
+    //             nodeArray.push(this.nodes.get(pair[0]))
+    //         }
+    //         if(nodeList.indexOf(pair[1]) == -1) {
+    //             nodeList.push(pair[1])
+    //             nodeArray.push(this.nodes.get(pair[1]))
+    //         }
+    //     }
+
+    //     this.nodeArray = nodeArray;
+    // }
 
     loadData(data, startTime = -1, endTime = -1) {
         this.dataToLoad = data
@@ -188,6 +194,11 @@ export class TransactionsGrid {
     }
 
     loadDataHelper(data, startTime = -1, endTime = -1) {
+        this.allTimeMax = 0.01;
+        this.allTimeMaxNumTrans = 1;
+        this.allTimeMaxBar = 0.01;
+        this.allTimeMaxNumTransBar = 1;
+
         let transactions;
         if(startTime >= 0 && endTime >= 0) {
             transactions = data.transactions.filter((tr) => {
@@ -216,13 +227,13 @@ export class TransactionsGrid {
         // this.sortByLargestIntersections();
 
         this.nodeArray = Array.from(this.nodes, ([id, node]) => ({id, node}));
-        if(this.toggleSort == 1) {
-            this.nodeArray.sort(this.compareNodeNumTransactions)
+        if(this.toggleSort == 0) {
+            this.nodeArray.sort(this.compareLargestTransaction)
         } else {
-            this.nodeArray.sort(this.compareNodeTotals)
+            this.nodeArray.sort(this.compareNodeNumTransactions)
         }
         
-        this.nodeArray.reverse()
+        // this.nodeArray.reverse()
         console.log(this.nodeArray)
         console.log("all time max:", this.allTimeMax)   
         this.isLoaded = true;
@@ -345,7 +356,7 @@ export class TransactionsGrid {
                 let transactions = []
                 // console.log(this.nodeArray[i])   
                 // console.log(this.nodeArray[i].node.transactions)
-                let transList = Array.from(this.nodeArray[i].node.transactions, ([key, value]) => ({key, value}))
+                let transList = Array.from(this.nodeArray[i].node.transactionsOut, ([key, value]) => ({key, value}))
                 transList.forEach(pair => {
                     // console.log(pair)
                     pair.value.forEach(val => {
@@ -368,7 +379,7 @@ export class TransactionsGrid {
                     (0) * (BLOCK_WIDTH + SPACING));
                 
                 // newBlock.recolor(amount / newBlock.globalMax);
-                console.log(amount, max, amount/max)
+                // console.log(amount, max, amount/max)
                 newBlock.pos = [i, 0]
                 // newBlock.getCube().geometry.scale(0.8, 1, 0.8)
                 this.scene.add(newBlock.getCube());
@@ -554,7 +565,7 @@ export class TransactionBlock {
         }
         this.cube.material.color = this.color;
 
-        this.hlColor = getColorFromRamp([this.color, new T.Color("white")], 0.5);
+        this.hlColor = getColorFromRamp([this.color, new T.Color("yellow")], 0.5);
     }
     
     setPosition(x, z) {
@@ -604,21 +615,51 @@ export class TransactionBlock {
 export class Node {
     constructor(id) {
         this.id = id;
-        this.transactions = new Map();
-        this.numTransactions = 0;
-        this.totalTransactionsValue = 0;
+        this.transactionsIn = new Map();
+        this.transactionsOut = new Map();
+        this.numTransactionsIn = 0;
+        this.totalTransactionsValueIn = 0;
+        this.largestTransactionIn = 0
+        this.numTransactionsOut = 0;
+        this.totalTransactionsValueOut = 0;
+        this.largestTransactionOut = 0
     }
 
-    addTransaction(otherNode, amount, time = 0) {
-        if(!this.transactions.get(otherNode.id)) {
-            this.transactions.set(otherNode.id, [])
+    addTransactionOut(otherNode, amount, time = 0) {
+        if(!this.transactionsOut.get(otherNode.id)) {
+            this.transactionsOut.set(otherNode.id, [])
         }
-        this.transactions.get(otherNode.id).push({
+        this.transactionsOut.get(otherNode.id).push({
             amount: amount,
             time: time
         });
-        this.numTransactions += 1
-        this.totalTransactionsValue += amount
-        // this.transactions.get(otherNode.id).push(amount);
+        this.numTransactionsOut += 1
+        this.totalTransactionsValueOut += amount
+        let transTotal = 0
+        this.transactionsOut.get(otherNode.id).forEach(val => {
+            transTotal += val.amount
+        })
+        if(transTotal > this.largestTransactionOut) {
+            this.largestTransactionOut = transTotal
+        }
+    }
+
+    addTransactionIn(otherNode, amount, time = 0) {
+        if(!this.transactionsIn.get(otherNode.id)) {
+            this.transactionsIn.set(otherNode.id, [])
+        }
+        this.transactionsIn.get(otherNode.id).push({
+            amount: amount,
+            time: time
+        });
+        this.numTransactionsIn += 1
+        this.totalTransactionsValueIn += amount
+        let transTotal = 0
+        this.transactionsIn.get(otherNode.id).forEach(val => {
+            transTotal += val.amount
+        })
+        if(transTotal > this.largestTransactionIn) {
+            this.largestTransactionIn = transTotal
+        }
     }
 }

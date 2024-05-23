@@ -11,6 +11,10 @@ const LOAD_RANGE = 5;
 const UNLOAD_RANGE = 10;
 const BLOCK_WIDTH = 1.0;
 const SPACING = 0.3;
+const ADDRESS_WIDTH = 3000
+const ADDRESS_SPACING = 10
+const HOVER_LIGHT_OPTIONS = ["yellow", 2, 10, 1]
+const HL_LIGHT_OPTIONS = ["purple", 80, 20, 2] // color, strength, range, decay
 
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -35,6 +39,8 @@ export class SceneControl {
         this.selectedBlock = null;
         this.selectedDiv;
         this.hlLight;
+        this.hoverLight;
+        this.hoverLightExists = false;
         this.canScroll = true;
         this.loadedChunks = new Map();
         this.isDataLoaded = false;
@@ -51,6 +57,20 @@ export class SceneControl {
         }
         this.storedCamera;
         this.cameraTVal = 0;
+
+
+
+        this.addressDiv1 = document.createElement('div');
+        this.addressDiv1.id = "addressDiv1";
+        document.body.appendChild(this.addressDiv1);
+
+        // this.addressText1 = new TextBox("addressText1", "addressDiv1", "Fake Address 1")
+
+        this.addressDiv2 = document.createElement('div');
+        this.addressDiv2.id = "addressDiv2";
+        document.body.appendChild(this.addressDiv2);
+
+        // this.addressText2 = new TextBox("addressText2", "addressDiv2", "Fake Address 2")
     }
 
     mouseUpdate() {
@@ -60,6 +80,10 @@ export class SceneControl {
 
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+        // console.log(event.clientX, event.clientY)
+        // this.addressDiv.style.left = (event.clientX-200) + "px"
+        // this.addressDiv.style.top = (event.clientY-50) + "px"
     }
 
     onMouseMove(event) {
@@ -106,6 +130,45 @@ export class SceneControl {
                 this.transactionsGrid.displayAmount.label.innerHTML =
                 "Number of Transactions: " + this.highlightedBlock.getTransactionsValue();
             }
+            let vector = this.highlightedBlock.getCube().position.clone();
+            vector.y += this.highlightedBlock.yScale / 2
+
+            vector.project( this.transactionsGrid.camera );
+
+            let x = (vector.x + 1) * window.innerWidth / 2;
+            let y = ((1 - vector.y)) * window.innerHeight / 2;
+
+            // console.log(x, y)
+
+            this.addressDiv1.style.left = (x-ADDRESS_WIDTH - ADDRESS_SPACING) + "px"
+            this.addressDiv1.style.top = (y) + "px"
+            // this.addressText1.label.innerHTML = "To: " + this.highlightedBlock.node2
+
+            this.addressDiv2.style.left = (x-(ADDRESS_WIDTH / 2)) + "px"
+            this.addressDiv2.style.top = (y-(ADDRESS_WIDTH / 2) - ADDRESS_SPACING) + "px"
+            // this.addressText2.label.innerHTML = "From: " + this.highlightedBlock.node1
+
+            if(!this.hoverLightExists) {
+                this.hoverLight = new T.PointLight(HOVER_LIGHT_OPTIONS[0], HOVER_LIGHT_OPTIONS[1], 
+                    HOVER_LIGHT_OPTIONS[2], HOVER_LIGHT_OPTIONS[3]);
+                this.hoverLight.position.x = this.highlightedBlock.getCube().position.x;
+                this.hoverLight.position.y = this.highlightedBlock.getCube().position.y + this.highlightedBlock.yScale / 2 + 1.0;
+                this.hoverLight.position.z = this.highlightedBlock.getCube().position.z;
+                this.scene.add(this.hoverLight);
+                this.hoverLightExists = true
+            }
+        } else {
+            this.addressDiv1.style.left = "-100000px"
+            this.addressDiv1.style.top = "-100000px"
+            // this.addressText1.label.innerHTML = "To: " + this.highlightedBlock.node2
+
+            this.addressDiv2.style.left = "-100000px"
+            this.addressDiv2.style.top = "-10000px"
+
+            if(this.hoverLightExists) {
+                this.scene.remove(this.hoverLight);
+                this.hoverLightExists = false;
+            }
         }
 
         if (this.isMouseHold && this.transactionsGrid.canDrag) {
@@ -146,9 +209,10 @@ export class SceneControl {
             let sideDiv = document.getElementById("sideDiv");
             sideDiv.style.width = "300px";
             sideDiv.style.padding = "10px";
-            this.hlLight = new T.PointLight("green", 20, 10, 2);
+        
+            this.hlLight = new T.PointLight(HL_LIGHT_OPTIONS[0], HL_LIGHT_OPTIONS[1], HL_LIGHT_OPTIONS[2], HL_LIGHT_OPTIONS[3]);
             this.hlLight.position.x = this.selectedBlock.getCube().position.x;
-            this.hlLight.position.y = this.selectedBlock.getCube().position.y + 3;
+            this.hlLight.position.y = this.selectedBlock.getCube().position.y + this.selectedBlock.yScale / 2 + 1.0;
             this.hlLight.position.z = this.selectedBlock.getCube().position.z;
             this.scene.add(this.hlLight);
 
@@ -356,12 +420,16 @@ export class SceneControl {
                 position: this.camera.position.clone(),
                 lookAtDelta: this.cameraBarView.lookAtDelta
             }
+            this.addressDiv1.style.height = "4px"
+            this.addressDiv2.style.height = "4px"
         }
         else if (toggle == 1) { // side bar view
             this.storedCamera = {
                 position: this.camera.position.clone(),
                 lookAtDelta: this.cameraGridView.lookAtDelta
             }
+            this.addressDiv1.style.height = "0px"
+            this.addressDiv2.style.height = "0px"
         }
         this.cameraMode = toggle;
     }
