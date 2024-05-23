@@ -18,8 +18,9 @@ export function startScene() {
 	const lights = sceneData.lights;
 
 	// transaction data init
-	const transactionsGrid = new TransactionsGrid(scene);
+	const transactionsGrid = new TransactionsGrid(scene, camera);
 	const control = new SceneControl(scene, camera, transactionsGrid);
+	// transactionGrid.control = control
 
 	// default file
 	// let file = "https://raw.githubusercontent.com/gjnguyen18/utxo-lenses/master/transformed_data2.json"

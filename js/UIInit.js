@@ -1,5 +1,10 @@
-import { Button, Checkbox, Slider, TextBox, Element } from "./pageElements"
+import { Button, Checkbox, Slider, TextBox, Element, Container } from "./pageElements"
 import { getData } from './endpoint.js';
+import * as T from 'three';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+
+
 
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -34,6 +39,17 @@ export function initUI(transactionsGrid, control, data) {
     let helpDiv = document.createElement('div');
     helpDiv.id = "helpDiv";
     document.body.appendChild(helpDiv)
+    helpDiv.onmousedown = () => {
+        transactionsGrid.canDrag = false;
+    }
+    helpDiv.onmouseenter = () => {
+        transactionsGrid.canHover = false;
+        control.canScroll = false;
+    }
+    helpDiv.onmouseleave = () => {
+        transactionsGrid.canHover = true;
+        control.canScroll = true;
+    }
 
     let title = new TextBox("title", "titleDiv", "RES LENSES");
 
@@ -41,6 +57,14 @@ export function initUI(transactionsGrid, control, data) {
     sideDiv.id = "sideDiv";
     document.body.appendChild(sideDiv);
     sideDiv.style.width = "0px";
+    sideDiv.onmouseenter = () => {
+        transactionsGrid.canHover = false;
+        control.canScroll = false;
+    }
+    sideDiv.onmouseleave = () => {
+        transactionsGrid.canHover = true;
+        control.canScroll = true;
+    }
 
     let topDiv = document.createElement('div');
     topDiv.id = "topDiv";
@@ -62,6 +86,8 @@ export function initUI(transactionsGrid, control, data) {
         transactionsGrid.canHover = true;
     }
     document.body.appendChild(bottomDiv);
+
+    let innerBottomDiv = new Container("innerBottom", "bottomDiv", false)
 
     let text1 = new TextBox("from display", "topDiv", "From: NA");
     transactionsGrid.displayFrom = text1;
@@ -106,7 +132,7 @@ export function initUI(transactionsGrid, control, data) {
     //     updateGrid();
     // })
 
-    let switchDataButton = new Button("SwitchButton", "bottomDiv")
+    let switchDataButton = new Button("SwitchButton", "innerBottom")
     switchDataButton.button.innerHTML = "Switch to ETH";
     switchDataButton.button.addEventListener("click", () => {
         let file;
@@ -131,7 +157,7 @@ export function initUI(transactionsGrid, control, data) {
         })
     });
 
-    let toggleSortButton = new Button("ToggleSortButton", "bottomDiv")
+    let toggleSortButton = new Button("ToggleSortButton", "innerBottom")
     toggleSortButton.button.innerHTML = "Sort By Num Transactions";
     toggleSortButton.button.addEventListener("click", () => {
         let file;
@@ -140,42 +166,53 @@ export function initUI(transactionsGrid, control, data) {
         } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
             file = "http://localhost:8080/getData_RESDB"
         }
-        control.isDataLoaded = false;
+        // control.isDataLoaded = false;
 
         let buttonName;
         if(toggleSortButton.button.innerHTML == "Sort By Num Transactions") {
             transactionsGrid.toggleSort = 1;
             buttonName = "Sort By Transactions Total";
         } else if(toggleSortButton.button.innerHTML == "Sort By Transactions Total") {
-            transactionsGrid.toggleSort = 2;
+            transactionsGrid.toggleSort = 0;
             buttonName = "Sort By Num Transactions";
         } else {
             return
         }
         toggleSortButton.button.innerHTML = "..."
 
-        getData(file, (data1) => {
-            // transactionsGrid.clearData();
-            control.isDataLoaded = true;
-            control.loadedChunks = new Map();
-            transactionsGrid.loadData(data1);
-            toggleSortButton.button.innerHTML = buttonName;
-        })
+        // getData(file, (data1) => {
+        //     // transactionsGrid.clearData();
+        //     control.isDataLoaded = true;
+        //     control.loadedChunks = new Map();
+        //     transactionsGrid.loadData(data1);
+        //     toggleSortButton.button.innerHTML = buttonName;
+        // })
+
+        // control.isDataLoaded = true;
+        // control.loadedChunks = new Map();
+        control.clearChunks();
+        transactionsGrid.createTempBlocks();
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        toggleSortButton.button.innerHTML = buttonName;
     })
 
-    let toggleViewButton = new Button("ToggleView", "bottomDiv")
+    let toggleViewButton = new Button("ToggleView", "innerBottom")
     toggleViewButton.button.innerHTML = "Bar View";
     toggleViewButton.button.addEventListener("click", () => {
         if(toggleViewButton.button.innerHTML == "Grid View") {
             control.setCamera(0);
             toggleViewButton.button.innerHTML = "Bar View";
         } else if(toggleViewButton.button.innerHTML == "Bar View") {
+            transactionsGrid.setVerticalOpacities();
             control.setCamera(1);
             toggleViewButton.button.innerHTML = "Grid View";
         } else {
             return
         }
-        transactionsGrid.clearBlocks();
+        // control.isDataLoaded = true;
+        // control.loadedChunks = new Map();
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        // transactionsGrid.clearBlocks();
         control.clearChunks();
     })
 
@@ -183,19 +220,25 @@ export function initUI(transactionsGrid, control, data) {
     let helpButton = new TextBox("Help button", "helpDiv", "?");
     helpButton.div.onmousedown = () => {
         if(!showHelp) {
-            helpDiv.style.height = "calc(100% - 340px)";
+            helpDiv.style.height = "calc(100% - 250px)";
             helpDiv.style.textAlign = "left"
             helpButton.label.innerHTML = helpText;
             helpButton.div.style.fontSize = "16px"
+            helpDiv.style.overflowY = 'scroll';
             showHelp = true;
         } else {
             helpDiv.style.height = "20px";
             helpDiv.style.textAlign = "center"
             helpButton.label.innerHTML = "?";
             helpButton.div.style.fontSize = "30px"
+            helpDiv.style.overflowY = 'hidden';
             showHelp = false;
         }
     }
+
+    let toggleScaleButton = new Button("ToggleScale", "innerBottom")
+
+    let toggleSymmetryButton = new Button("ToggleSymmetry", "innerBottom")
 
     // updateBar()
 
@@ -219,4 +262,69 @@ export function initUI(transactionsGrid, control, data) {
     //     transactionsGrid.loadData(data, startTime, endTime)
     //     transactionsGrid.setBlocks();
     // }
+
+    // const loader = new FontLoader();
+
+    // loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+    //     const geometry = new TextGeometry( 'Hello three.js!', {
+    //         font: font,
+    //         size: 2,
+    //         depth: 0.01,
+    //         curveSegments: 12,
+
+    //         bevelThickness: 0.1,
+    //         bevelSize: 0.1,
+    //         bevelEnabled: true
+    //     } );
+
+    //     let material = new T.MeshPhongMaterial({ 
+    //         color: "red"
+    //     });
+    
+    //     let mesh = new T.Mesh(geometry, material);
+    
+    //     // mesh.rotateZ(Math.PI / 2)
+    //     // mesh.rotateY(Math.PI)
+    //     mesh.rotateX(Math.PI / 4)
+    //     // mesh.rotateZ(Math.PI)
+    
+    //     mesh.position.set(-2, -5, -2);
+    
+    //     transactionsGrid.scene.add(mesh)
+
+    //     console.log( "font loaded:", font );
+
+    // } );
+
+    // const font = loader.load(
+    //     // resource URL
+    //     'fonts/helvetiker_bold.typeface.json',
+
+    //     // onLoad callback
+    //     function ( font ) {
+    //         // do something with the font
+    //         console.log( "font loaded:", font );
+
+    //         // let geometry = new TextGeometry( 'Hello three.js!', {
+    //         //     font: font,
+    //         //     size: 80
+    //         //     } );
+        
+    //         // let material = new T.MeshPhongMaterial({ 
+    //         //     color: "red"
+    //         // });
+        
+    //         // let mesh = new T.Mesh(geometry, material);
+        
+    //         // mesh.rotateZ(Math.PI / 4)
+        
+    //         // mesh.position.set(-2, 0, -2);
+        
+    //         // transactionsGrid.scene.add(mesh)
+    //     }
+    // );
+
+
+
 }
