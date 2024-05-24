@@ -199,8 +199,8 @@ export class Select extends Element {
             this.select.appendChild(option);
         }
 
-        this.elements.push(this.label);
-        this.elements.push(this.labelBreak);
+        // this.elements.push(this.label);
+        // this.elements.push(this.labelBreak);
         this.elements.push(this.select);
         // this.elements.push(this.endBreak);
 

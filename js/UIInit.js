@@ -1,9 +1,8 @@
-import { Button, Checkbox, Slider, TextBox, Element, Container } from "./pageElements"
+import { Button, Checkbox, Slider, TextBox, Element, Container, Select } from "./pageElements"
 import { getData } from './endpoint.js';
 import * as T from 'three';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-
 
 
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
@@ -158,24 +157,27 @@ export function initUI(transactionsGrid, control, data) {
     });
 
     let toggleSortButton = new Button("ToggleSortButton", "innerBottom")
-    toggleSortButton.button.innerHTML = "Sort By Num Transactions";
+    toggleSortButton.button.innerHTML = "Sort By Number of Transactions";
     toggleSortButton.button.addEventListener("click", () => {
-        let file;
-        if(switchDataButton.button.innerHTML == "Switch to RESDB") {
-            file = "http://localhost:8080/getData_ETH"
-        } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
-            file = "http://localhost:8080/getData_RESDB"
-        }
+        // let file;
+        // if(switchDataButton.button.innerHTML == "Switch to RESDB") {
+        //     file = "http://localhost:8080/getData_ETH"
+        // } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
+        //     file = "http://localhost:8080/getData_RESDB"
+        // }
         // control.isDataLoaded = false;
 
         let buttonName;
-        if(toggleSortButton.button.innerHTML == "Sort By Num Transactions") {
-            transactionsGrid.toggleSort = 1;
-            buttonName = "Sort By Transactions Total";
-        } else if(toggleSortButton.button.innerHTML == "Sort By Transactions Total") {
+        if(toggleSortButton.button.innerHTML == "Sort By Transactions Total") {
             transactionsGrid.toggleSort = 0;
-            buttonName = "Sort By Num Transactions";
-        } else {
+            buttonName = "Sort By Number of Transactions";
+        } else if(toggleSortButton.button.innerHTML == "Sort By Number of Transactions") {
+            transactionsGrid.toggleSort = 1;
+            buttonName = "Sort By Largest Transaction Involvement";
+        } else if(toggleSortButton.button.innerHTML == "Sort By Largest Transaction Involvement") {
+            transactionsGrid.toggleSort = 2;
+            buttonName = "Sort By Transactions Total";
+        }  else {
             return
         }
         toggleSortButton.button.innerHTML = "..."
@@ -218,6 +220,12 @@ export function initUI(transactionsGrid, control, data) {
 
     let showHelp = false;
     let helpButton = new TextBox("Help button", "helpDiv", "?");
+    helpDiv.style.height = "calc(100% - 250px)";
+    helpDiv.style.textAlign = "left"
+    helpButton.label.innerHTML = helpText;
+    helpButton.div.style.fontSize = "16px"
+    helpDiv.style.overflowY = 'scroll';
+    showHelp = true;
     helpButton.div.onmousedown = () => {
         if(!showHelp) {
             helpDiv.style.height = "calc(100% - 250px)";
@@ -238,7 +246,7 @@ export function initUI(transactionsGrid, control, data) {
 
     let toggleScaleButton = new Button("ToggleScale", "innerBottom")
 
-    let toggleSymmetryButton = new Button("ToggleSymmetry", "innerBottom")
+    let toggleSymmetryButton = new Select("ToggleSymmetry", "innerBottom", ["Option 1", "Option 2", "Option 3"])
 
     // updateBar()
 

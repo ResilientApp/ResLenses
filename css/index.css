@@ -24,6 +24,23 @@ html, body {
     border-radius: 5px;
 }
 
+.selectDiv .Select-menu-outer {
+    position: absolute !important;
+    top: auto !important;
+    bottom: calc(100% - 1px) !important;
+    border-bottom-left-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+    border-top-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+}
+
+.selectDiv .is-open .Select-control {
+    border-top-right-radius: 0 !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-right-radius: 5px !important;
+    border-bottom-left-radius: 5px !important;
+}
+
 .horizontalContainer {
     width: 100%;
 }
@@ -79,11 +96,11 @@ button:hover {
     font-family:Impact;
     text-align: center;
     background-color: rgba(0, 0, 0, 0.3);
-    user-select: none;
+    /* user-select: none;
     -moz-user-select: none;
     -khtml-user-select: none;
     -webkit-user-select: none;
-    -o-user-select: none;
+    -o-user-select: none; */
 }
 
 #helpDiv {
@@ -214,7 +231,7 @@ button:hover {
 #addressDiv1 {
     color: white;
     width: 3000px;
-    height: 4px;
+    height: 2px;
     position: absolute;
     padding: 0px;
     font-size: 12px;
@@ -227,7 +244,7 @@ button:hover {
 #addressDiv2 {
     color: white;
     width: 3000px;
-    height: 4px;
+    height: 2px;
     position: absolute;
     padding: 0px;
     font-size: 12px;
@@ -243,6 +260,14 @@ button:hover {
 
 #to-display-div {
     color:#00ff00
+}
+
+#transaction-from-div {
+    color: #ff99ff
+}
+
+#transaction-to-div {
+    color: #ff99ff
 }
 
 /* https://codingartistweb.com/2021/06/double-range-slider-html-css-javascript/*/

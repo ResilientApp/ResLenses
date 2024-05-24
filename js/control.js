@@ -15,6 +15,7 @@ const ADDRESS_WIDTH = 3000
 const ADDRESS_SPACING = 10
 const HOVER_LIGHT_OPTIONS = ["yellow", 2, 10, 1]
 const HL_LIGHT_OPTIONS = ["purple", 80, 20, 2] // color, strength, range, decay
+const LIGHT_X_SHIFT = 1;
 
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -46,6 +47,7 @@ export class SceneControl {
         this.isDataLoaded = false;
         this.cameraMode = 0; // 0 is grid, 1 is bar view
         this.transitioning = false;
+        this.sideBarTransactionsToLoad = []
 
         this.cameraGridView = {
             position: new T.Vector3(0, 10, 0),
@@ -149,11 +151,12 @@ export class SceneControl {
             // this.addressText2.label.innerHTML = "From: " + this.highlightedBlock.node1
 
             if(!this.hoverLightExists) {
+                let shift = this.cameraMode == 1 ? LIGHT_X_SHIFT : 0
                 this.hoverLight = new T.PointLight(HOVER_LIGHT_OPTIONS[0], HOVER_LIGHT_OPTIONS[1], 
                     HOVER_LIGHT_OPTIONS[2], HOVER_LIGHT_OPTIONS[3]);
                 this.hoverLight.position.x = this.highlightedBlock.getCube().position.x;
-                this.hoverLight.position.y = this.highlightedBlock.getCube().position.y + this.highlightedBlock.yScale / 2 + 1.0;
-                this.hoverLight.position.z = this.highlightedBlock.getCube().position.z;
+                this.hoverLight.position.y = this.highlightedBlock.getCube().position.y + (this.highlightedBlock.yScale / 2) + 1.0;
+                this.hoverLight.position.z = this.highlightedBlock.getCube().position.z + shift;
                 this.scene.add(this.hoverLight);
                 this.hoverLightExists = true
             }
@@ -210,10 +213,11 @@ export class SceneControl {
             sideDiv.style.width = "300px";
             sideDiv.style.padding = "10px";
         
+            let shift = this.cameraMode == 1 ? LIGHT_X_SHIFT : 0
             this.hlLight = new T.PointLight(HL_LIGHT_OPTIONS[0], HL_LIGHT_OPTIONS[1], HL_LIGHT_OPTIONS[2], HL_LIGHT_OPTIONS[3]);
             this.hlLight.position.x = this.selectedBlock.getCube().position.x;
-            this.hlLight.position.y = this.selectedBlock.getCube().position.y + this.selectedBlock.yScale / 2 + 1.0;
-            this.hlLight.position.z = this.selectedBlock.getCube().position.z;
+            this.hlLight.position.y = this.selectedBlock.getCube().position.y + (this.selectedBlock.yScale / 2) + 1.0;
+            this.hlLight.position.z = this.selectedBlock.getCube().position.z + shift;
             this.scene.add(this.hlLight);
 
             if (this.selectedDiv) {
@@ -222,44 +226,29 @@ export class SceneControl {
 
             // add to side bar
             this.selectedDiv = new Container("transaction select", "sideDiv", true);
-            let displayFrom = new TextBox("transaction from", "sideDiv", "From: " + String(this.clickedBlock.node1).substring(0, 20) + "...");
+            let displayFrom = new TextBox("transaction from", "sideDiv", "From: " + 
+                String(this.clickedBlock.node1).substring(0, 20) + "...");
             
             if(this.clickedBlock.node2) {
-                let displayTo = new TextBox("transaction to", "sideDiv", "To: " + String(this.clickedBlock.node2).substring(0, 20) + "...");
+                let displayTo = new TextBox("transaction to", "sideDiv", "To: " + 
+                    String(this.clickedBlock.node2).substring(0, 20) + "...");
                 this.selectedDiv.addBlock(displayFrom, displayTo)
             } else {
                 this.selectedDiv.addBlock(displayFrom)
             }
-            let count = 0;
+            // let count = 0;
             this.clickedBlock.transactions.sort(function (a, b) {
                 return new Date(b.time) - new Date(a.time);
             });
+
             // console.log(this.clickedBlock.transactions)
+            // let count = 0
             this.clickedBlock.transactions.forEach(t => {
-                if (t.amount > 0) {
-                    let transactionContainer = new Container("tCont", "sideDiv", true);
-                    let toText;
-                    if(t.to) {
-                        // console.log(t.to)
-                        toText = new TextBox("transaction to", "sideDiv", "To: " + String(t.to));
-                    }
-                    let text = new TextBox("transaction amount", "sideDiv", "Amount: " + String(t.amount));
-                    let date = new Date(t.time);
-                    let timeText = String(date.getMonth()) + "-" + String(date.getDay()) + "-" + String(date.getFullYear());
-                    if(timeText == "NaN-NaN-NaN") {
-                        timeText = "N/A"
-                    }
-                    let text2 = new TextBox("transaction time", "sideDiv", "Time: " + timeText);
-                    if(toText) {
-                        transactionContainer.addBlock(toText, text, text2);
-                    } else {
-                        transactionContainer.addBlock(text, text2);
-                    }
-                    this.selectedDiv.addBlock(transactionContainer)
-                    count += 1;
-                }
+                this.sideBarTransactionsToLoad.push(t);
+                // this.addTransactionsToSideBar(t)
+                // count += 1
             })
-            if (count == 0) {
+            if (this.sideBarTransactionsToLoad.length == 0) {
                 let transactionContainer = new Container("tCont", "sideDiv", true);
                 let text = new TextBox("transaction", "sideDiv", "Amount: NA");
                 transactionContainer.addBlock(text);
@@ -267,6 +256,31 @@ export class SceneControl {
             }
 
             this.selectedBlock.toggleSelect(true);
+        }
+    }
+
+    addTransactionsToSideBar(t) {
+        if (t.amount > 0) {
+            let transactionContainer = new Container("tCont", "sideDiv", true);
+            let toText;
+            if(t.to) {
+                // console.log(t.to)
+                toText = new TextBox("transaction to inner", "sideDiv", "To: " + String(t.to));
+            }
+            let text = new TextBox("transaction amount", "sideDiv", "Amount: " + String(t.amount));
+            let date = new Date(t.time);
+            let timeText = String(date.getMonth()) + "-" + String(date.getDay()) + "-" + String(date.getFullYear());
+            if(timeText == "NaN-NaN-NaN") {
+                timeText = "N/A"
+            }
+            let text2 = new TextBox("transaction time", "sideDiv", "Time: " + timeText);
+            if(toText) {
+                transactionContainer.addBlock(toText, text, text2);
+            } else {
+                transactionContainer.addBlock(text, text2);
+            }
+            this.selectedDiv.addBlock(transactionContainer)
+            // count += 1;
         }
     }
 
@@ -288,29 +302,39 @@ export class SceneControl {
         }
     }
 
+    unselectBlock() {
+        if(this.clickedBlock) {
+            this.clickedBlock.toggleSelect(false);
+            let sideDiv = document.getElementById("sideDiv");
+            sideDiv.style.width = "0px";
+            sideDiv.style.padding = "10px 0px 10px 0px";
+            this.scene.remove(this.hlLight);
+        }
+        this.sideBarTransactionsToLoad = []
+    }
+
     onMouseUp(event) {
         this.isMouseHold = false;
         this.transactionsGrid.canDrag = true;
         if (this.lastMouse.x == this.mouse.x && this.lastMouse.y == this.mouse.y) {
-            if (this.clickedBlock) {
-                this.clickedBlock.toggleSelect(false);
-                let sideDiv = document.getElementById("sideDiv");
-                sideDiv.style.width = "0px";
-                sideDiv.style.padding = "10px 0px 10px 0px";
-                this.scene.remove(this.hlLight);
-            }
+            this.unselectBlock();
             this.clickedBlock = this.highlightedBlock;
         }
     }
 
     update() {
+        // updates to side bar
+        if(this.sideBarTransactionsToLoad.length > 0) {
+            let transaction = this.sideBarTransactionsToLoad.shift()
+            this.addTransactionsToSideBar(transaction)
+        }
         // camera movement
         if (this.transitioning) {
             this.cameraTVal += 0.008;
             if (this.cameraTVal >= 1) {
                 this.transitioning = false;
                 this.cameraTVal = 1
-                console.log("transition:", 1)
+                // console.log("transition:", 1)
             }
 
             let toCamera;
@@ -414,14 +438,15 @@ export class SceneControl {
     }
 
     setCamera(toggle) {
+        this.unselectBlock();
         this.transitioning = true;
         if (toggle == 0) { // top down grid view
             this.storedCamera = {
                 position: this.camera.position.clone(),
                 lookAtDelta: this.cameraBarView.lookAtDelta
             }
-            this.addressDiv1.style.height = "4px"
-            this.addressDiv2.style.height = "4px"
+            this.addressDiv1.style.height = "2px"
+            this.addressDiv2.style.height = "2px"
         }
         else if (toggle == 1) { // side bar view
             this.storedCamera = {
@@ -437,7 +462,7 @@ export class SceneControl {
     bindCamera() {
         if (this.isDataLoaded) {
             if (!this.transactionsGrid.nodeArray) {
-                console.log("no array yet")
+                // console.log("no array yet")
                 return
             }
             let maxCameraRange = (BLOCK_WIDTH + SPACING) * this.transactionsGrid.nodeArray.length

@@ -4,7 +4,7 @@ import { getColorFromRamp } from './helpers';
 // const COLORS = [new T.Color(0, 0.5, 1), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
 const COLORS = [new T.Color(0, 0.7, 0.6), new T.Color(1, 1, 1)];
 const COLORS2 = [new T.Color(0.3, 0.3, 0.3), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
-const SELECT_COLOR = new T.Color(0.2, 0.7, 0.3);
+const SELECT_COLOR = new T.Color(0.8, 0.2, 0.8);
 const SELECT_COLOR_HL = new T.Color(0.2, 1, 0.5);
 const BLOCK_WIDTH = 1.0;
 const SPACING = 0.3;
@@ -153,44 +153,9 @@ export class TransactionsGrid {
             Math.max(node1.node.largestTransactionOut, node1.node.largestTransactionIn)
     }
 
-    // sortByLargestIntersections() {
-    //     console.log("sort by inter")
-    //     let transactionsArray = Array.from(this.transactions, ([key, value]) => ({key, value}));
-    //     transactionsArray.sort((node1, node2) => {
-    //         let t1 = node1.value
-    //         let t2 = node2.value
-    //         let s1 = 0
-    //         let s2 = 0
-    //         t1.forEach(t => {s1 += t.amount})
-    //         t2.forEach(t => {s2 += t.amount})
-    //         return s1 - s2
-    //     })
-
-    //     transactionsArray.reverse();
-    //     // console.log(transactionsArray)
-
-    //     let nodeList = []
-    //     let nodeArray = []
-    //     for(let i = 0; i < transactionsArray.length; i++) {
-    //         let pair = transactionsArray[i].key.split(',')
-    //         if(nodeList.indexOf(pair[0]) == -1) {
-    //             nodeList.push(pair[0])
-    //             nodeArray.push(this.nodes.get(pair[0]))
-    //         }
-    //         if(nodeList.indexOf(pair[1]) == -1) {
-    //             nodeList.push(pair[1])
-    //             nodeArray.push(this.nodes.get(pair[1]))
-    //         }
-    //     }
-
-    //     this.nodeArray = nodeArray;
-    // }
-
     loadData(data, startTime = -1, endTime = -1) {
         this.dataToLoad = data
-        // this.deleting = true;
         this.isLoaded = false;
-        // this.createTempBlocks()
     }
 
     loadDataHelper(data, startTime = -1, endTime = -1) {
@@ -219,23 +184,26 @@ export class TransactionsGrid {
                     Number(t.amount),
                     t.timestamp);
             } else {
-                console.log("failed to add trans")
+                console.log("failed to add transaction")
             }
         })
 
-        console.log("all time max num trans:", this.allTimeMaxNumTrans)
+        // console.log("all time max num trans:", this.allTimeMaxNumTrans)
         // this.sortByLargestIntersections();
 
         this.nodeArray = Array.from(this.nodes, ([id, node]) => ({id, node}));
         if(this.toggleSort == 0) {
+            this.nodeArray.sort(this.compareNodeTotals)
+        } else if(this.toggleSort == 1) {
+            this.nodeArray.sort(this.compareNodeNumTransactions)
+        } else if(this.toggleSort == 2) {
             this.nodeArray.sort(this.compareLargestTransaction)
         } else {
-            this.nodeArray.sort(this.compareNodeNumTransactions)
+            console.log("Sorting method unrecognized:", this.toggleSort)
         }
         
-        // this.nodeArray.reverse()
-        console.log(this.nodeArray)
-        console.log("all time max:", this.allTimeMax)   
+        // console.log(this.nodeArray)
+        // console.log("all time max:", this.allTimeMax)   
         this.isLoaded = true;
     }
 
@@ -279,11 +247,11 @@ export class TransactionsGrid {
                     }
                     
                     if(amount >=  this.allTimeMax) {
-                        console.log(amount)
+                        // console.log(amount)
                     }
                     // newBlock.recolor(amount / newBlock.globalMax);
                     this.scene.add(newBlock.getCube());
-                    console.log("load add")
+                    // console.log("load add")
 
                     // add to map
                     this.loadedBlocks.set([i, k].toString(), newBlock);
@@ -295,27 +263,27 @@ export class TransactionsGrid {
     }
 
     createTempBlocks() {
-        let unloadingBlocksList = Array.from(this.loadedBlocks, ([key, val]) => ({key, val}))
-        unloadingBlocksList.forEach(pair => {
-            let block = pair.val
-            let tempBlock = new TransactionBlock(0, 0, [], 0, 1);
-            tempBlock.setPosition(
-                block.getCube().position.x, 
-                block.getCube().position.z);
-            // tempBlock.getCube().geometry.scale(0.96, 0.96, 0.96)
-            tempBlock.recolor(0)
+        // let unloadingBlocksList = Array.from(this.loadedBlocks, ([key, val]) => ({key, val}))
+        // unloadingBlocksList.forEach(pair => {
+        //     let block = pair.val
+        //     let tempBlock = new TransactionBlock(0, 0, [], 0, 1);
+        //     tempBlock.setPosition(
+        //         block.getCube().position.x, 
+        //         block.getCube().position.z);
+        //     // tempBlock.getCube().geometry.scale(0.96, 0.96, 0.96)
+        //     tempBlock.recolor(0)
 
 
-            this.scene.add(tempBlock.getCube())
-            this.tempBlocks.push(tempBlock)
-        })
+        //     this.scene.add(tempBlock.getCube())
+        //     this.tempBlocks.push(tempBlock)
+        // })
     }
 
     clearTempBlocks() {
-        this.tempBlocks.forEach(block => {
-            this.scene.remove(block.getCube())
-        })
-        this.tempBlocks = []
+        // this.tempBlocks.forEach(block => {
+        //     this.scene.remove(block.getCube())
+        // })
+        // this.tempBlocks = []
     } 
 
     unloadBlocks(x, y, arrayLen) {
@@ -421,7 +389,7 @@ export class TransactionsGrid {
                     }
                 }
             } else {
-                console.log("all blocks cleared")
+                // console.log("all blocks cleared")
                 this.clearing = false;
                 this.blocks = [];
                 this.loadedBlocks = new Map();
@@ -453,7 +421,7 @@ export class TransactionsGrid {
     update() {
         // this.clearBlocksHelper();
         if(!this.isLoaded) {
-            console.log("unloading")
+            // console.log("unloading")
             let unloadingBlocksList = Array.from(this.loadedBlocks, ([key, val]) => ({key, val}))
             unloadingBlocksList.forEach(pair => {
                 let block = pair.val
@@ -478,7 +446,7 @@ export class TransactionsGrid {
             // finished deleting old data
             if(unloadingBlocksList.length == 0 && this.dataToLoad) {
                 this.clearData();
-                console.log("begin new data load")
+                // console.log("begin new data load")
                 this.loadDataHelper(this.dataToLoad)
                 this.isLoaded = true
             }
@@ -535,7 +503,7 @@ export class TransactionBlock {
         this.node1 = node1;
         this.node2 = node2;
         this.color = getColorFromRamp(COLORS, 0);
-        this.hlColor = new T.Color("white");
+        this.hlColor = new T.Color("yellow");
         this.selected = false;
         this.yScale = MIN_HEIGHT;
         this.finalScale = (this.value / this.globalMax) * MAX_HEIGHT + MIN_HEIGHT

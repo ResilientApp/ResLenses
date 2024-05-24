@@ -28,13 +28,12 @@ http://localhost:5173/?link=https://0d09-76-78-246-51.ngrok-free.app/api/v1/?sta
 export async function getData(file, afterFunction = (data) => { }) {
     try {
 
-        console.log("get data")
-        console.log(file);
+        console.log("Getting Data:", file);
 
         const apiData = await fetchDataFromAPI(file);
 
-        console.log("api data")
-        console.log(apiData);
+        // console.log("api data")
+        // console.log(apiData);
 
         // Process the API data as needed
         const nodes = apiData.users;
