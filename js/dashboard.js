@@ -40,7 +40,12 @@ export function startScene() {
 	getData(file, (data) => {
 		transactionsGrid.loadData(data);
 		control.isDataLoaded = true;
-		initUI(transactionsGrid, control, data);
+
+		fetch("../tooltips.json").then(response => response.text()).then(tooltipData => {
+			let tooltips = JSON.parse(tooltipData)
+			// console.log(tooltips)
+			initUI(transactionsGrid, control, data, tooltips);
+		})
 	})
 
 	// mouse events

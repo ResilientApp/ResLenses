@@ -1,4 +1,4 @@
-import { Button, Checkbox, Slider, TextBox, Element, Container, Select } from "./pageElements"
+import { Button, Checkbox, Slider, TextBox, Element, Container, Select, CustomSelect } from "./pageElements"
 import { getData } from './endpoint.js';
 import * as T from 'three';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
@@ -8,14 +8,25 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-const helpText = "This is a 3D heatmap representing transactions between users. T" +
- "he blocks on the grid represent the total sum of transactions between any two users across laid out across the X and Y axis" +
- ". Smaller, bluer cubes indicate less/smaller transactions while larger, redder cubes indicate more/larger transactions" + 
- "<br /> <br /> The viewer may drag click to move the camera around, scroll up and down to zoom in/out" +
- ", and double click on any block to see further details on transactions between two users, normal clicking will deselect the block." + 
- "<br /> <br /> The bottom two sided slider allows the viewer to select a range of time, which will filter only transactions that exist within that time" +
- ". Clicking update will refresh the scene with only those transactions" + 
- "<br /> <br /> Click this tab again to hide the tab."
+const helpText = 
+ "This is a heatmap representing UTXO transactions activity between pairs of addresses. " +
+ "In grid view addresses are layed out as From/To by the X and Y axis. " +
+ "Bar view can be selected to summarize total activty per address." +
+ "<br /> <br />" + 
+ "<b><u> Camera Controls</u></b>: " + 
+ "The viewer may drag click to move the camera around, scroll up and down to zoom in/out, " + 
+ "and double click on any block to see further details on activity between two addresses. " +
+ "Normal clicking will deselect the currently focused block." + 
+ "<br /> <br />" + 
+ "<b><u> Left Tab</u></b>: " + 
+ "This tab will appear when an activity bar is selected. " + 
+ "Displays detailed information on the focused block " + 
+ "<br /> <br />" + 
+ "<b><u> Configurations</u></b>: " + 
+ "The bottom bar holds a set buttons that allow for reorganization and reconfiguration of the data. " +
+ "Play around with them to see how else this data can be visualized. " + 
+ "<br /> <br /> " +
+ "Click this tab to hide."
 
 function getDate(value) {
     return MONTHS[value%MONTHS.length] + " " + String(YEARS[Math.floor(value/MONTHS.length)])
@@ -29,7 +40,7 @@ function getDateObj(value) {
     return date;
 }
 
-export function initUI(transactionsGrid, control, data) {
+export function initUI(transactionsGrid, control, data, tooltips) {
     /* UI */
     let titleDiv = document.createElement('div');
     titleDiv.id = "titleDiv";
@@ -86,6 +97,12 @@ export function initUI(transactionsGrid, control, data) {
     }
     document.body.appendChild(bottomDiv);
 
+    let allSelects = []
+    let unlockMovement = () => {
+        transactionsGrid.canDrag = true;
+        transactionsGrid.canHover = true;
+    }
+
     let innerBottomDiv = new Container("innerBottom", "bottomDiv", false)
 
     let text1 = new TextBox("from display", "topDiv", "From: NA");
@@ -131,96 +148,158 @@ export function initUI(transactionsGrid, control, data) {
     //     updateGrid();
     // })
 
-    let switchDataButton = new Button("SwitchButton", "innerBottom")
-    switchDataButton.button.innerHTML = "Switch to ETH";
-    switchDataButton.button.addEventListener("click", () => {
-        let file;
-        let buttonName;
-        if(switchDataButton.button.innerHTML == "Switch to RESDB") {
-            buttonName = "Switch to ETH";
-            file = "http://localhost:8080/getData_RESDB"
-        } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
-            buttonName = "Switch to RESDB";
-            file = "http://localhost:8080/getData_ETH"
-        } else {
-            return
-        }
-        switchDataButton.button.innerHTML = "..."
+    // let switchDataButton = new Button("SwitchButton", "innerBottom")
+    // switchDataButton.button.innerHTML = "Switch to ETH";
+    // switchDataButton.button.addEventListener("click", () => {
+    //     let file;
+    //     let buttonName;
+    //     if(switchDataButton.button.innerHTML == "Switch to RESDB") {
+    //         buttonName = "Switch to ETH";
+    //         file = "http://localhost:8080/getData_RESDB"
+    //     } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
+    //         buttonName = "Switch to RESDB";
+    //         file = "http://localhost:8080/getData_ETH"
+    //     } else {
+    //         return
+    //     }
+    //     switchDataButton.button.innerHTML = "..."
+    //     control.isDataLoaded = false;
+    //     getData(file, (data1) => {
+    //         // transactionsGrid.clearData();
+    //         control.isDataLoaded = true;
+    //         control.loadedChunks = new Map();
+    //         transactionsGrid.loadData(data1);
+    //         switchDataButton.button.innerHTML = buttonName;
+    //     })
+    // });
+
+    let refocusButton = new Button("Return to Origin", "innerBottom", () => {
+        control.resetCamera();
+    })
+    refocusButton.setToolTip(tooltips.resetPosition, "topTooltip")
+
+    // data select
+    let dataFunc1 = () => {
+        let file = "http://localhost:8080/getData_RESDB"
         control.isDataLoaded = false;
+        unlockMovement();
         getData(file, (data1) => {
             // transactionsGrid.clearData();
             control.isDataLoaded = true;
             control.loadedChunks = new Map();
+            transactionsGrid.dataType = 0;
             transactionsGrid.loadData(data1);
-            switchDataButton.button.innerHTML = buttonName;
         })
-    });
+    }
+    let dataFunc2 = () => {
+        let file = "http://localhost:8080/getData_ETH"
+        control.isDataLoaded = false;
+        unlockMovement();
+        getData(file, (data1) => {
+            // transactionsGrid.clearData();
+            control.isDataLoaded = true;
+            control.loadedChunks = new Map();
+            transactionsGrid.dataType = 1;
+            transactionsGrid.loadData(data1);
+        })
+    }
+    let dataSelect = new CustomSelect("SelectData", "innerBottom", "Data", 
+        [["ResDB", dataFunc1, tooltips.resDBData], ["Ethereum", dataFunc2, tooltips.ethData]]
+    )
+    allSelects.push(dataSelect)
+    dataSelect.button.setToolTip(tooltips.dataSelect, "topTooltip")
 
-    let toggleSortButton = new Button("ToggleSortButton", "innerBottom")
-    toggleSortButton.button.innerHTML = "Sort By Number of Transactions";
-    toggleSortButton.button.addEventListener("click", () => {
-        // let file;
-        // if(switchDataButton.button.innerHTML == "Switch to RESDB") {
-        //     file = "http://localhost:8080/getData_ETH"
-        // } else if(switchDataButton.button.innerHTML == "Switch to ETH") {
-        //     file = "http://localhost:8080/getData_RESDB"
-        // }
-        // control.isDataLoaded = false;
-
-        let buttonName;
-        if(toggleSortButton.button.innerHTML == "Sort By Transactions Total") {
-            transactionsGrid.toggleSort = 0;
-            buttonName = "Sort By Number of Transactions";
-        } else if(toggleSortButton.button.innerHTML == "Sort By Number of Transactions") {
-            transactionsGrid.toggleSort = 1;
-            buttonName = "Sort By Largest Transaction Involvement";
-        } else if(toggleSortButton.button.innerHTML == "Sort By Largest Transaction Involvement") {
-            transactionsGrid.toggleSort = 2;
-            buttonName = "Sort By Transactions Total";
-        }  else {
-            return
-        }
-        toggleSortButton.button.innerHTML = "..."
-
-        // getData(file, (data1) => {
-        //     // transactionsGrid.clearData();
-        //     control.isDataLoaded = true;
-        //     control.loadedChunks = new Map();
-        //     transactionsGrid.loadData(data1);
-        //     toggleSortButton.button.innerHTML = buttonName;
-        // })
-
-        // control.isDataLoaded = true;
-        // control.loadedChunks = new Map();
+    // sort select
+    let sortFunc1 = () => {
+        transactionsGrid.toggleSort = 0;
         control.clearChunks();
         transactionsGrid.createTempBlocks();
         transactionsGrid.loadData(transactionsGrid.dataToLoad);
-        toggleSortButton.button.innerHTML = buttonName;
-    })
-
-    let toggleViewButton = new Button("ToggleView", "innerBottom")
-    toggleViewButton.button.innerHTML = "Bar View";
-    toggleViewButton.button.addEventListener("click", () => {
-        if(toggleViewButton.button.innerHTML == "Grid View") {
-            control.setCamera(0);
-            toggleViewButton.button.innerHTML = "Bar View";
-        } else if(toggleViewButton.button.innerHTML == "Bar View") {
-            transactionsGrid.setVerticalOpacities();
-            control.setCamera(1);
-            toggleViewButton.button.innerHTML = "Grid View";
-        } else {
-            return
-        }
-        // control.isDataLoaded = true;
-        // control.loadedChunks = new Map();
-        transactionsGrid.loadData(transactionsGrid.dataToLoad);
-        // transactionsGrid.clearBlocks();
+        unlockMovement();
+    }
+    let sortFunc2 = () => {
+        transactionsGrid.toggleSort = 1;
         control.clearChunks();
-    })
+        transactionsGrid.createTempBlocks();
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        unlockMovement();
+    }
+    let sortFunc3 = () => {
+        transactionsGrid.toggleSort = 2;
+        control.clearChunks();
+        transactionsGrid.createTempBlocks();
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        unlockMovement();
+    }
+    let sortSelect = new CustomSelect("sortSelect", "innerBottom", "Sort by", [
+        ["Transactions Total", sortFunc1, tooltips.transactionTotal], 
+        ["Number of Transactions", sortFunc2, tooltips.numTransactions], 
+        ["Largest Transaction", sortFunc3, tooltips.largestTransaction]])
+    allSelects.push(sortSelect)
+    sortSelect.button.setToolTip(tooltips.sortSelect, "topTooltip")
+
+
+    // view select
+    let viewFunc1 = () => {
+        control.setCamera(0);
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        control.clearChunks();
+        unlockMovement();
+    }
+    let viewFunc2 = () => {
+        control.setCamera(1);
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        control.clearChunks();
+        unlockMovement();
+    }
+    let viewSelect = new CustomSelect("ViewSelect", "innerBottom", "View", 
+        [["Grid", viewFunc1, tooltips.grid],
+         ["Bar", viewFunc2, tooltips.bar]]
+    )
+    allSelects.push(viewSelect)
+    viewSelect.button.setToolTip(tooltips.viewSelect, "topTooltip")
+
+
+    // scale select
+    let scaleFunc1 = () => {
+        console.log("scale1")
+        unlockMovement();
+    }
+    let scaleFunc2 = () => {
+        console.log("scale2")
+        unlockMovement();
+    }
+    let scaleSelect = new CustomSelect("ScaleSelect", "innerBottom", "Scale",
+        [["Linear", scaleFunc1, tooltips.linear], 
+        ["Log", scaleFunc2, tooltips.log]])
+    allSelects.push(scaleSelect)
+    scaleSelect.button.setToolTip(tooltips.scaleSelect, "topTooltip")
+
+    // symmetry select
+    let symmFunc1 = () => {
+        console.log("func 1")
+        transactionsGrid.symmetrical = true;
+        control.clearChunks();
+        transactionsGrid.createTempBlocks();
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        unlockMovement();
+    }
+    let symmFunc2 = () => {
+        console.log("func 2")
+        transactionsGrid.symmetrical = false;
+        control.clearChunks();
+        transactionsGrid.createTempBlocks();
+        transactionsGrid.loadData(transactionsGrid.dataToLoad);
+        unlockMovement();
+    }
+    let symmetrySelect = new CustomSelect("SymmetrySelect", "innerBottom", "Symmetry",
+        [["False", symmFunc2, tooltips.asymmetric],
+         ["True", symmFunc1, tooltips.symmetric]])
+    symmetrySelect.button.setToolTip(tooltips.symmetrySelect, "topTooltip")
 
     let showHelp = false;
     let helpButton = new TextBox("Help button", "helpDiv", "?");
-    helpDiv.style.height = "calc(100% - 250px)";
+    helpDiv.style.height = "calc(100% - 260px)";
     helpDiv.style.textAlign = "left"
     helpButton.label.innerHTML = helpText;
     helpButton.div.style.fontSize = "16px"
@@ -228,7 +307,7 @@ export function initUI(transactionsGrid, control, data) {
     showHelp = true;
     helpButton.div.onmousedown = () => {
         if(!showHelp) {
-            helpDiv.style.height = "calc(100% - 250px)";
+            helpDiv.style.height = "calc(100% - 260px)";
             helpDiv.style.textAlign = "left"
             helpButton.label.innerHTML = helpText;
             helpButton.div.style.fontSize = "16px"
@@ -243,11 +322,6 @@ export function initUI(transactionsGrid, control, data) {
             showHelp = false;
         }
     }
-
-    let toggleScaleButton = new Button("ToggleScale", "innerBottom")
-
-    let toggleSymmetryButton = new Select("ToggleSymmetry", "innerBottom", ["Option 1", "Option 2", "Option 3"])
-
     // updateBar()
 
     // function updateBar(){

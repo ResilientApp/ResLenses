@@ -25,6 +25,7 @@ export class Element {
         this.label = document.createElement("label");
         this.label.id = name.replaceAll(" ","-");
         this.label.innerHTML = name;
+        this.tooltip = ""
     }
 
     createLineBreak() {
@@ -77,6 +78,7 @@ export class Element {
         span.classList.add("tooltiptext");
         span.classList.add(section);
         span.innerHTML = text;
+        this.tooltip = text;
         this.elements.push(span);
         this.div.appendChild(span);
     }
@@ -195,6 +197,7 @@ export class Select extends Element {
             let option = document.createElement("option");
             option.text = this.options[i][0];
             option.value = this.options[i][1];
+            option.classList.add("selectOption")
             this.selectOptions.push(option);
             this.select.appendChild(option);
         }
@@ -212,6 +215,7 @@ export class Select extends Element {
         let newOption = document.createElement("option");
         newOption.text = option[0];
         newOption.value = option[1];
+        newOption.classList.add("selectOption")
         this.selectOptions.push(newOption);
         this.select.appendChild(newOption);
     }
@@ -286,5 +290,66 @@ export class Button extends Element {
         this.elements.push(this.button);
         
         this.addElements();
+    }
+}
+
+export class CustomSelect {
+    constructor(name, domParent, text, options = []) {
+        let container = new Container("selectContainer"+name, domParent, true)
+        this.container = container
+        this.options = options
+        this.showing = false;
+        this.domParent2 = domParent
+        this.selectedValue = null
+
+        this.button = new Button(name, this.domParent2, () => {
+            if(!this.showing) {
+                this.showOptions();
+                this.showing = true
+            } else {
+                this.hideOptions();
+                this.showing = false
+            }
+        })
+        this.button.button.innerHTML = text + ": " + options[0][0]
+       
+        this.buttons = []
+        this.selected = this.options[0]
+        this.text = text;
+        this.name = name;
+        this.container.addBlock(this.button)
+    }
+
+    showOptions() {
+        this.button.div.remove()
+        for(let i = 0; i < this.options.length; i++) {
+            let newOption = new Button(this.options[i][0], this.domParent2, () => {
+                if(this.selected != this.options[i]) {
+                    this.selected = this.options[i]
+                    this.options[i][1]();
+                    this.button.button.innerHTML = this.text + ": " + this.options[i][0];
+                }
+                this.showing = false;
+                this.hideOptions();
+            })
+            newOption.div.classList.add("option")
+            if(this.options[i].length >= 3) {
+                newOption.setToolTip(this.button.tooltip, "topTooltip")
+                newOption.setToolTip(this.options[i][2], "bottomTooltip")
+            }
+            // newOption.div.style.opacity = "0"
+            // newOption.div.style.opacity = "0.8"
+            this.buttons.push(newOption)
+            this.container.addBlock(newOption)
+        }
+        this.container.addBlock(this.button)
+        this.container.div.style.marginTop = "-" + Number(this.button.div.offsetHeight * this.options.length * 2) + "px"
+    }
+
+    hideOptions() {
+        this.buttons.forEach(button => {
+            button.div.remove();
+        })
+        this.container.div.style.marginTop = "0px"
     }
 }

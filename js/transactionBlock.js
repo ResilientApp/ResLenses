@@ -44,6 +44,7 @@ export class TransactionsGrid {
         this.allTimeMaxBar = 0.01;
         this.allTimeMaxNumTransBar = 1;
         this.symmetrical = false
+        this.dataType = 0; // 0 = resDB, 1 = eth
     }
 
     addNode(id) {
@@ -55,10 +56,10 @@ export class TransactionsGrid {
         let node1 = this.nodes.get(id1);
         let node2 = this.nodes.get(id2);
 
-        node1.addTransactionIn(node2, amount);
-        node2.addTransactionOut(node1, amount);
+        node1.addTransactionIn(node2, amount, time);
+        node2.addTransactionOut(node1, amount, time);
 
-        let key = [id1, id2].toString();
+        let key = [id2, id1].toString();
 
         if(!this.transactions.get(key)) {
             this.transactions.set(key, [])
@@ -69,10 +70,10 @@ export class TransactionsGrid {
         });
 
         if(this.symmetrical) {
-            node2.addTransactionIn(node1, amount);
-            node1.addTransactionOut(node2, amount);
+            node2.addTransactionIn(node1, amount, time);
+            node1.addTransactionOut(node2, amount, time);
 
-            let key2 = [id2, id1].toString();
+            let key2 = [id1, id2].toString();
 
             if(!this.transactions.get(key2)) {
                 this.transactions.set(key2, [])
@@ -164,15 +165,17 @@ export class TransactionsGrid {
         this.allTimeMaxBar = 0.01;
         this.allTimeMaxNumTransBar = 1;
 
-        let transactions;
-        if(startTime >= 0 && endTime >= 0) {
-            transactions = data.transactions.filter((tr) => {
-                let date = new Date(tr.timestamp);
-                return date > startTime && date < endTime;
-            })
-        } else {
-            transactions = data.transactions;
-        }
+        // let transactions;
+        // if(startTime >= 0 && endTime >= 0) {
+        //     transactions = data.transactions.filter((tr) => {
+        //         let date = new Date(tr.timestamp);
+        //         return date > startTime && date < endTime;
+        //     })
+        // } else {
+        //     transactions = data.transactions;
+        // }
+
+        let transactions = data.transactions;
 
         data.nodes.forEach((i) => this.addNode(i));
 

@@ -24,6 +24,7 @@ html, body {
     border-radius: 5px;
 }
 
+/* 
 .selectDiv .Select-menu-outer {
     position: absolute !important;
     top: auto !important;
@@ -39,7 +40,7 @@ html, body {
     border-top-left-radius: 0 !important;
     border-bottom-right-radius: 5px !important;
     border-bottom-left-radius: 5px !important;
-}
+} */
 
 .horizontalContainer {
     width: 100%;
@@ -51,6 +52,15 @@ html, body {
     margin-right: 20px;
     vertical-align: middle;
 }
+
+/* .verticalContainer {
+    top: auto;
+    bottom: 100%;
+} */
+
+/* .verticalContainer > div > button {
+    transition: 0.5s;
+} */
 
 .checkDiv {
     text-align: right;
@@ -66,6 +76,8 @@ input[type='file'] {
     margin-right: 0px;
 }
 
+
+
 button {
     background-color:rgb(10, 10, 10);
     opacity: 0.8;
@@ -80,18 +92,60 @@ button:hover {
     transition: 0.3s;
 }
 
+/* select {
+    background-color:rgb(10, 10, 10);
+    opacity: 0.8;
+    border: 0 !important;
+    color: white;
+    font-family: "Lucida Console";
+    border-radius: 0 !important;
+    text-align: center;
+} */
+
+/* select:focus, select:active {
+    border-radius: 0 !important;
+    border: none;
+    outline: none;
+} */
+
+
+/* select:hover {
+    cursor: pointer;
+    background-color:rgb(165, 165, 165);
+    transition: 0.3s;
+    border-radius: 0;
+}
+
+.Select-menu-outer{
+    top: auto;
+    bottom: 100%;
+    border-radius: 0 !important;
+}
+
+.selectOption {
+    border: none;
+    border-radius: 0px !important;  
+    padding-top: 5px !important;
+} */
+
+
+/* option {
+    padding: 5px;
+} */
+
+
 #tCont {
     padding: 10px;
 }
 
 #titleDiv {
     color: white;
-    width: calc(300px) !important;
-    height: 60px;
+    width: calc(320px) !important;
+    height: 90px;
     position: fixed;
     top: 10px;
     right: 10px;
-    padding: 20px;
+    padding: 10px;
     font-size: 50px;
     font-family:Impact;
     text-align: center;
@@ -108,7 +162,7 @@ button:hover {
     width: calc(300px) !important;
     height: 30px;
     position: fixed;
-    top: 120px;
+    top: 130px;
     right: 10px;
     padding: 20px;
     font-size: 30px;
@@ -166,6 +220,45 @@ button:hover {
     transition: 0.3s;
 }
 
+
+/* tool tips */
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    background-color:rgb(0,0,0,0.3);
+    color: #fff;
+    padding: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: normal;
+}
+
+.tooltip:hover .tooltiptext {
+    opacity: 1;
+    visibility: visible;
+}
+
+.topTooltip {
+    position: fixed;
+    top: 10px;
+    left: calc(740px);
+    width: calc(100% - 1120px);
+    height: calc(20px);
+    font-size: 14px;
+    text-align: center;
+}
+
+.bottomTooltip {
+    position: fixed;
+    top: 60px;
+    left: calc(740px);
+    width: calc(100% - 1120px);
+    height: calc(40px);
+    font-size: 14px;
+    text-align: left;
+
+}
+
 #sideDiv > * {
     overflow-x:hidden;
     white-space: nowrap; 
@@ -196,12 +289,36 @@ button:hover {
 
 #innerBottom > * {
     height: 30px;
-    width: calc(18%);
+    width: calc(15%);
+    padding: 0px;
+    left: 0px;
+    bottom: 0px;
 }
 
-#innerBottom > * > * {
+#innerBottom > * > button {
     height: calc(100%);
     width: calc(100%);
+    padding: 0px;
+    left: 0px;
+    bottom: 0px;
+}
+
+#innerBottom > * > div{
+    height: calc(100%);
+    width: calc(100%);
+    padding: 0px;
+    left: 0px;
+    bottom: 0px;
+    border-radius: 0px;
+}
+
+#innerBottom > * > * > button {
+    height: calc(100%);
+    width: calc(100%);
+    padding: 0px;
+    left: 0px;
+    bottom: 0px;
+    border-radius: 0px;
 }
 
 #SwitchButton-div {
