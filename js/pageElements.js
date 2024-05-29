@@ -326,8 +326,8 @@ export class CustomSelect {
             let newOption = new Button(this.options[i][0], this.domParent2, () => {
                 if(this.selected != this.options[i]) {
                     this.selected = this.options[i]
-                    this.options[i][1]();
                     this.button.button.innerHTML = this.text + ": " + this.options[i][0];
+                    this.options[i][1]();
                 }
                 this.showing = false;
                 this.hideOptions();

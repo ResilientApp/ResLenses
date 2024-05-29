@@ -179,7 +179,10 @@ export function initUI(transactionsGrid, control, data, tooltips, resDBLink, eth
     refocusButton.setToolTip(tooltips.resetPosition, "topTooltip")
 
     // data select
+    let dataSelect;
     let dataFunc1 = () => {
+        dataSelect.button.button.disabled = true;
+        dataSelect.button.button.innerHTML = "Loading ResDB ..."
         let file = resDBLink
         control.isDataLoaded = false;
         unlockMovement();
@@ -189,9 +192,13 @@ export function initUI(transactionsGrid, control, data, tooltips, resDBLink, eth
             control.loadedChunks = new Map();
             transactionsGrid.dataType = 0;
             transactionsGrid.loadData(data1);
+            dataSelect.button.button.disabled = false;
+            dataSelect.button.button.innerHTML = "Data: ResDB"
         })
     }
     let dataFunc2 = () => {
+        dataSelect.button.button.disabled = true;
+        dataSelect.button.button.innerHTML = "Loading Ethereum ..."
         let file = ethLink
         control.isDataLoaded = false;
         unlockMovement();
@@ -201,9 +208,11 @@ export function initUI(transactionsGrid, control, data, tooltips, resDBLink, eth
             control.loadedChunks = new Map();
             transactionsGrid.dataType = 1;
             transactionsGrid.loadData(data1);
+            dataSelect.button.button.disabled = false;
+            dataSelect.button.button.innerHTML = "Data: Ethereum"
         })
     }
-    let dataSelect = new CustomSelect("SelectData", "innerBottom", "Data", 
+    dataSelect = new CustomSelect("SelectData", "innerBottom", "Data", 
         [["ResDB", dataFunc1, tooltips.resDBData], ["Ethereum", dataFunc2, tooltips.ethData]]
     )
     allSelects.push(dataSelect)
