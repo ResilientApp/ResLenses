@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { getColorFromRamp } from './helpers';
+import { getColorFromRamp } from './helpers.js';
 
 // const COLORS = [new T.Color(0, 0.5, 1), new T.Color(0.5, 0.5, 0), new T.Color(1, 0, 0)];
 const COLORS = [new T.Color(0, 0.7, 0.6), new T.Color(1, 1, 1)];
