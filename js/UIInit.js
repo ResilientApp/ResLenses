@@ -1,8 +1,8 @@
 import { Button, Checkbox, Slider, TextBox, Element, Container, Select, CustomSelect } from "./pageElements"
 import { getData } from './endpoint.js';
-import * as T from 'three';
-import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+// import * as T from 'three';
+// import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+// import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
 
 const YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
@@ -40,7 +40,7 @@ function getDateObj(value) {
     return date;
 }
 
-export function initUI(transactionsGrid, control, data, tooltips) {
+export function initUI(transactionsGrid, control, data, tooltips, resDBLink, ethLink) {
     /* UI */
     let titleDiv = document.createElement('div');
     titleDiv.id = "titleDiv";
@@ -180,7 +180,7 @@ export function initUI(transactionsGrid, control, data, tooltips) {
 
     // data select
     let dataFunc1 = () => {
-        let file = "http://localhost:8080/getData_RESDB"
+        let file = resDBLink
         control.isDataLoaded = false;
         unlockMovement();
         getData(file, (data1) => {
@@ -192,7 +192,7 @@ export function initUI(transactionsGrid, control, data, tooltips) {
         })
     }
     let dataFunc2 = () => {
-        let file = "http://localhost:8080/getData_ETH"
+        let file = ethLink
         control.isDataLoaded = false;
         unlockMovement();
         getData(file, (data1) => {
@@ -261,19 +261,19 @@ export function initUI(transactionsGrid, control, data, tooltips) {
 
 
     // scale select
-    let scaleFunc1 = () => {
-        console.log("scale1")
-        unlockMovement();
-    }
-    let scaleFunc2 = () => {
-        console.log("scale2")
-        unlockMovement();
-    }
-    let scaleSelect = new CustomSelect("ScaleSelect", "innerBottom", "Scale",
-        [["Linear", scaleFunc1, tooltips.linear], 
-        ["Log", scaleFunc2, tooltips.log]])
-    allSelects.push(scaleSelect)
-    scaleSelect.button.setToolTip(tooltips.scaleSelect, "topTooltip")
+    // let scaleFunc1 = () => {
+    //     console.log("scale1")
+    //     unlockMovement();
+    // }
+    // let scaleFunc2 = () => {
+    //     console.log("scale2")
+    //     unlockMovement();
+    // }
+    // let scaleSelect = new CustomSelect("ScaleSelect", "innerBottom", "Scale",
+    //     [["Linear", scaleFunc1, tooltips.linear], 
+    //     ["Log", scaleFunc2, tooltips.log]])
+    // allSelects.push(scaleSelect)
+    // scaleSelect.button.setToolTip(tooltips.scaleSelect, "topTooltip")
 
     // symmetry select
     let symmFunc1 = () => {
