@@ -1,9 +1,9 @@
 
-import { Network, ethers } from 'ethers';
-import { Web3BaseProvider } from 'web3';
-import { graphql, buildSchema } from 'graphql';
-import { fetchDataFromAPI } from './endpoint';
-import axios from 'axios';
+// import { Network, ethers } from 'ethers';
+// import { Web3BaseProvider } from 'web3';
+// import { graphql, buildSchema } from 'graphql';
+// import { fetchDataFromAPI } from './endpoint';
+// import axios from 'axios';
 
 export async function test() {
 
