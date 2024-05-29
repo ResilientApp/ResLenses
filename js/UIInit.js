@@ -1,4 +1,4 @@
-import { Button, Checkbox, Slider, TextBox, Element, Container, Select, CustomSelect } from "./pageElements"
+import { Button, Checkbox, Slider, TextBox, Element, Container, Select, CustomSelect } from "./pageElements.js"
 import { getData } from './endpoint.js';
 // import * as T from 'three';
 // import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
