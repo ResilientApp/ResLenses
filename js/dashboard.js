@@ -25,10 +25,10 @@ export function startScene() {
 	// default file
 	// let file = "https://raw.githubusercontent.com/gjnguyen18/utxo-lenses/master/transformed_data2.json"
 	// let resDBLink = "http://localhost:3080/getData_RESDB"
-	// let ethLink = "http://localhost:3080/getData_ETH"
+	let ethLink = "http://localhost:3080/getData_ETH"
 
 	let resDBLink = "https://res-lenses-backend.resilientdb.com/getData_RESDB"
-	let ethLink = "https://res-lenses-backend.resilientdb.com/getData_ETH"
+	// let ethLink = "https://res-lenses-backend.resilientdb.com/getData_ETH"
 
 	// console.log(encodeURIComponent("http://127.0.0.1:5501/api/v1/?startTime=2022-11-01T00:00:00Z&endTime=2023-11-30T23:59:59Z"))
 
