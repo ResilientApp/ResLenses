@@ -1,25 +1,21 @@
 {
-  "name": "three.js-scene",
+  "name": "res-lenses",
   "version": "1.0.0",
-  "description": "��#\u0000 \u0000u\u0000t\u0000x\u0000o\u0000-\u0000l\u0000e\u0000n\u0000s\u0000e\u0000s\u0000\r\u0000 \u0000",
+  "description": "",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx vite build && powershell -Command \"(Get-Content dist\\index.html) -replace '/assets', './assets' | Out-File -encoding ASCII dist\\index.html\""
+    "build": "npx vite build && powershell -Command \"(Get-Content dist\\index.html) -replace '/assets', './assets' | Out-File -encoding ASCII dist\\index.html\"",
+    "deploy": "gh-pages -d dist"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.8",
-    "ethers": "^6.11.1",
-    "gh-pages": "^6.0.0",
-    "graphql": "^16.8.1",
-    "requests": "^0.3.0",
-    "three": "^0.158.0",
-    "web3": "^4.4.0"
+    "axios": "^1.7.2",
+    "gh-pages": "^6.1.1",
+    "three": "^0.164.1"
   },
   "devDependencies": {
-    "git-pages": "^0.8.1",
     "vite": "^5.2.12"
   }
 }

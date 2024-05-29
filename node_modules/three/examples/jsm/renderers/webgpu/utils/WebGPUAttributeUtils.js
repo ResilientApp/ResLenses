@@ -17,7 +17,9 @@ const typedAttributeToVertexFormatPrefix = new Map( [
 
 const typeArraysToVertexFormatPrefixForItemSize1 = new Map( [
 	[ Int32Array, 'sint32' ],
+	[ Int16Array, 'sint32' ], // patch for INT16
 	[ Uint32Array, 'uint32' ],
+	[ Uint16Array, 'uint32' ], // patch for UINT16
 	[ Float32Array, 'float32' ]
 ] );
 
@@ -42,7 +44,40 @@ class WebGPUAttributeUtils {
 
 			const device = backend.device;
 
-			const array = bufferAttribute.array;
+			let array = bufferAttribute.array;
+
+			// patch for INT16 and UINT16
+			if ( attribute.normalized === false && ( array.constructor === Int16Array || array.constructor === Uint16Array ) ) {
+
+				const tempArray = new Uint32Array( array.length );
+				for ( let i = 0; i < array.length; i ++ ) {
+
+					tempArray[ i ] = array[ i ];
+
+				}
+
+				array = tempArray;
+
+			}
+
+			bufferAttribute.array = array;
+
+			if ( ( bufferAttribute.isStorageBufferAttribute || bufferAttribute.isStorageInstancedBufferAttribute ) && bufferAttribute.itemSize === 3 ) {
+
+				array = new array.constructor( bufferAttribute.count * 4 );
+
+				for ( let i = 0; i < bufferAttribute.count; i ++ ) {
+
+					array.set( bufferAttribute.array.subarray( i * 3, i * 3 + 3 ), i * 4 );
+
+				}
+
+				// Update BufferAttribute
+				bufferAttribute.itemSize = 4;
+				bufferAttribute.array = array;
+
+			}
+
 			const size = array.byteLength + ( ( 4 - ( array.byteLength % 4 ) ) % 4 ); // ensure 4 byte alignment, see #20441
 
 			buffer = device.createBuffer( {
@@ -72,9 +107,9 @@ class WebGPUAttributeUtils {
 		const buffer = backend.get( bufferAttribute ).buffer;
 
 		const array = bufferAttribute.array;
-		const updateRange = bufferAttribute.updateRange;
+		const updateRanges = bufferAttribute.updateRanges;
 
-		if ( updateRange.count === - 1 ) {
+		if ( updateRanges.length === 0 ) {
 
 			// Not using update ranges
 
@@ -87,15 +122,20 @@ class WebGPUAttributeUtils {
 
 		} else {
 
-			device.queue.writeBuffer(
-				buffer,
-				0,
-				array,
-				updateRange.offset * array.BYTES_PER_ELEMENT,
-				updateRange.count * array.BYTES_PER_ELEMENT
-			);
+			for ( let i = 0, l = updateRanges.length; i < l; i ++ ) {
 
-			updateRange.count = - 1; // reset range
+				const range = updateRanges[ i ];
+				device.queue.writeBuffer(
+					buffer,
+					0,
+					array,
+					range.start * array.BYTES_PER_ELEMENT,
+					range.count * array.BYTES_PER_ELEMENT
+				);
+
+			}
+
+			bufferAttribute.clearUpdateRanges();
 
 		}
 
@@ -127,6 +167,13 @@ class WebGPUAttributeUtils {
 
 					arrayStride = geometryAttribute.itemSize * bytesPerElement;
 					stepMode = geometryAttribute.isInstancedBufferAttribute ? GPUInputStepMode.Instance : GPUInputStepMode.Vertex;
+
+				}
+
+				// patch for INT16 and UINT16
+				if ( geometryAttribute.normalized === false && ( geometryAttribute.array.constructor === Int16Array || geometryAttribute.array.constructor === Uint16Array ) ) {
+
+					arrayStride = 4;
 
 				}
 

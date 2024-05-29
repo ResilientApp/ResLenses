@@ -1,22 +1,18 @@
 import { Color, Matrix3, Matrix4, Vector2, Vector3, Vector4 } from 'three';
 
-export function getCacheKey( object ) {
+export function getCacheKey( object, force = false ) {
 
 	let cacheKey = '{';
 
 	if ( object.isNode === true ) {
 
-		cacheKey += `uuid:"${ object.uuid }"`;
+		cacheKey += object.id;
 
 	}
 
-	for ( const { property, index, childNode } of getNodeChildren( object ) ) {
+	for ( const { property, childNode } of getNodeChildren( object ) ) {
 
-		// @TODO: Think about implement NodeArray and NodeObject.
-
-		let childCacheKey = getCacheKey( childNode );
-		if ( ! childCacheKey.includes( ',' ) ) childCacheKey = childCacheKey.slice( childCacheKey.indexOf( '"' ), childCacheKey.indexOf( '}' ) );
-		cacheKey += `,${ property }${ index !== undefined ? '/' + index : '' }:${ childCacheKey }`;
+		cacheKey += ',' + property.slice( 0, - 4 ) + ':' + childNode.getCacheKey( force );
 
 	}
 
