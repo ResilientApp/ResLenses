@@ -24,27 +24,30 @@ export function startScene() {
 
 	// default file
 	// let file = "https://raw.githubusercontent.com/gjnguyen18/utxo-lenses/master/transformed_data2.json"
-	let file = "http://localhost:8080/getData_RESDB"
-	// let file = "http://localhost:8080/getData_ETH"
+	// let resDBLink = "http://localhost:3080/getData_RESDB"
+	// let ethLink = "http://localhost:3080/getData_ETH"
+
+	let resDBLink = "https://res-lenses-backend.resilientdb.com/getData_RESDB"
+	let ethLink = "https://res-lenses-backend.resilientdb.com/getData_ETH"
 
 	// console.log(encodeURIComponent("http://127.0.0.1:5501/api/v1/?startTime=2022-11-01T00:00:00Z&endTime=2023-11-30T23:59:59Z"))
 
 	// if query contains link, use that instead
-	let urlSearchParams = new URLSearchParams(window.location.search);
-	let params = Object.fromEntries(urlSearchParams.entries());
-	let link = params.link;
-	if (link) {
-		file = link;
-	} 
+	// let urlSearchParams = new URLSearchParams(window.location.search);
+	// let params = Object.fromEntries(urlSearchParams.entries());
+	// let link = params.link;
+	// if (link) {
+	// 	resDBLink = link;
+	// } 
 
-	getData(file, (data) => {
+	getData(resDBLink, (data) => {
 		transactionsGrid.loadData(data);
 		control.isDataLoaded = true;
 
 		fetch("../tooltips.json").then(response => response.text()).then(tooltipData => {
 			let tooltips = JSON.parse(tooltipData)
 			// console.log(tooltips)
-			initUI(transactionsGrid, control, data, tooltips);
+			initUI(transactionsGrid, control, data, tooltips, resDBLink, ethLink);
 		})
 	})
 

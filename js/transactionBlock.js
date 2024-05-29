@@ -45,6 +45,7 @@ export class TransactionsGrid {
         this.allTimeMaxNumTransBar = 1;
         this.symmetrical = false
         this.dataType = 0; // 0 = resDB, 1 = eth
+        this.scaling = 0; // 0 = normal, 1 = log
     }
 
     addNode(id) {
