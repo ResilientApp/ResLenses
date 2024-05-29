@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { Container, TextBox } from './pageElements';
+import { Container, TextBox } from './pageElements.js';
 
 const CAMERA_SPEED = 15;
 const CAMERA_DECEL_SPEED = 0.99;
