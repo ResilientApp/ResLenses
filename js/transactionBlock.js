@@ -178,6 +178,8 @@ export class TransactionsGrid {
 
         let transactions = data.transactions;
 
+        console.log(transactions.length)
+
         data.nodes.forEach((i) => this.addNode(i));
 
         transactions.forEach((t) => {
